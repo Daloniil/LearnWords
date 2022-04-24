@@ -1,0 +1,44 @@
+export const wordsStyle = {
+  fontSize: "18px",
+  margin: "2px",
+  textAlign: "center",
+  minWidth: "120px",
+};
+
+export const titleWordsStyle = {
+  fontSize: "19px",
+  textAlign: "center",
+};
+
+export const searchStyle = {
+  width: "100%",
+  display: "flex",
+};
+
+export const rowStyle = {
+  "&:active": {
+    background: "#f4f5f6",
+  },
+  "&:hover": {
+    background: "#f4f5f6",
+  },
+};
+
+export const rowStyleDark = {
+  "&:active": {
+    background: "grey",
+  },
+  "&:hover": {
+    background: "grey",
+  },
+};
+
+export const modalStyle = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  background: "white",
+  boxShadow: "24",
+  borderRadius: "5%",
+};

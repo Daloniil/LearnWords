@@ -1,0 +1,41 @@
+{
+  "homepage": "https://daloniil.github.io/LearnWordNextJs/",
+  "name": "learwordnextjs",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
+    "dev": "next dev",
+    "build": "next build",
+    "export": "npm run build && next export -o _static",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.8.2",
+    "@emotion/styled": "^11.8.1",
+    "@hookform/resolvers": "^2.8.8",
+    "@mui/icons-material": "^5.5.1",
+    "@mui/material": "^5.5.2",
+    "@mui/styled-engine-sc": "^5.5.2",
+    "@mui/styles": "^5.5.1",
+    "axios": "^0.26.1",
+    "next": "12.1.1",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
+    "react-hook-form": "^7.28.1",
+    "styled-components": "^5.3.5",
+    "yup": "^0.32.11"
+  },
+  "devDependencies": {
+    "@types/node": "17.0.23",
+    "@types/react": "17.0.43",
+    "@types/react-dom": "17.0.14",
+    "@types/react-window": "^1.8.5",
+    "eslint": "8.12.0",
+    "eslint-config-next": "12.1.1",
+    "gh-pages": "^3.2.3",
+    "typescript": "4.6.3"
+  }
+}
