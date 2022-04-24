@@ -53,9 +53,9 @@ const Layout = ({ children }: LayoutProps) => {
     }
   }, []);
 
-  useEffect(() => {
-    setMode(themeContext);
-  }, [themeContext]);
+  // useEffect(() => {
+  //   setMode(themeContext);
+  // }, [themeContext]);
 
   return (
     <ThemeProvider theme={theme}>
