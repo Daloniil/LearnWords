@@ -22,7 +22,7 @@ const Layout = ({ children }: LayoutProps) => {
   const { languageContext } = useLanguage();
   const { themeContext } = useTheme();
 
-  const [mode, setMode] = useState<"light" | "dark">("light");
+  const [mode, setMode] = useState("light");
 
   const [open, setOpen] = useState(false);
   const items = paths.find((path) => path.pathName === router.asPath);
@@ -37,14 +37,15 @@ const Layout = ({ children }: LayoutProps) => {
     }
   }, []);
 
-  // useEffect(() => {
-  //   setMode(themeContext as "light" | "dark");
-  // }, [themeContext]);
+  useEffect(() => {
+    setMode(themeContext);
+  }, [themeContext]);
 
   const theme = createTheme({
-    // palette: {
-    //   mode,
-    // },
+    palette: {
+      //@ts-ignore
+      mode,
+    },
     components: {
       MuiCssBaseline: {
         styleOverrides: {
