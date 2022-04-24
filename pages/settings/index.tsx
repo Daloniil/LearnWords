@@ -75,7 +75,7 @@ const SettingsPage = () => {
         <Select
           labelId="demo-simple-select"
           id="demo-simple"
-          value={theme}
+          value={theme ? theme : "light"}
           label="theme"
           onChange={handleChangeTheme}
           defaultValue={language}
