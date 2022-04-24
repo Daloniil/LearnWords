@@ -11,7 +11,7 @@ import { useNotification } from "../hooks/useNotification";
 import { useTheme } from "../hooks/useTheme";
 import { useWords } from "../hooks/useWords";
 import { LayoutProps } from "../Interfaces/LayoutInterface";
-import { Mode, NotificationKeys, WordsParams } from "../services/localKey";
+import { NotificationKeys, WordsParams } from "../services/localKey";
 import { paths } from "../utils/path";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 
