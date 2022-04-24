@@ -38,7 +38,6 @@ export const modalStyle = {
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  background: "white",
   boxShadow: "24",
   borderRadius: "5%",
 };

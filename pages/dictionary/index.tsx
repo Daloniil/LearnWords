@@ -29,11 +29,13 @@ import { EditWord } from "../../components/EditWord";
 import { useLanguage } from "../../hooks/useLanguage";
 import { dictionaryTranslation } from "../../translation/Dictionary";
 import { setTranslation } from "../../utils/setTranslation";
+import { useTheme } from "../../hooks/useTheme";
 
 const DictionaryPage = () => {
   const { englishWords } = useWords();
   const { search } = useSearch();
   const { languageContext } = useLanguage();
+  const { themeContext } = useTheme();
 
   const [words, setWords] = useState(englishWords);
   const [statusDelete, setStatusDelete] = useState(false);
@@ -85,7 +87,10 @@ const DictionaryPage = () => {
         aria-labelledby="simple-modal-title"
         aria-describedby="simple-modal-description"
       >
-        <Box sx={modalStyle}>
+        <Box
+          sx={modalStyle}
+          style={{ backgroundColor: themeContext ? "#232323" : "white" }}
+        >
           <EditWord
             editId={editId}
             wordEdit={editWord}
