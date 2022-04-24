@@ -37,14 +37,14 @@ const Layout = ({ children }: LayoutProps) => {
     }
   }, []);
 
-  useEffect(() => {
-    setMode(themeContext as "light" | "dark");
-  }, [themeContext]);
+  // useEffect(() => {
+  //   setMode(themeContext as "light" | "dark");
+  // }, [themeContext]);
 
   const theme = createTheme({
-    palette: {
-      mode,
-    },
+    // palette: {
+    //   mode,
+    // },
     components: {
       MuiCssBaseline: {
         styleOverrides: {
