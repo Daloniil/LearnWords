@@ -30,17 +30,6 @@ const Layout = ({ children }: LayoutProps) => {
   const status =
     englishWords.length <= WordsParams.MINLENGTH && router.asPath === "/test";
 
-  useEffect(() => {
-    if (status) {
-      addNotification("leastFive", NotificationKeys.ERROR);
-      Router.push("/enter");
-    }
-  }, []);
-
-  useEffect(() => {
-    setMode(themeContext);
-  }, [themeContext]);
-
   const theme = createTheme({
     palette: {
       //@ts-ignore
@@ -56,6 +45,17 @@ const Layout = ({ children }: LayoutProps) => {
       },
     },
   });
+
+  useEffect(() => {
+    if (status) {
+      addNotification("leastFive", NotificationKeys.ERROR);
+      Router.push("/enter");
+    }
+  }, []);
+
+  useEffect(() => {
+    setMode(themeContext);
+  }, [themeContext]);
 
   return (
     <ThemeProvider theme={theme}>
