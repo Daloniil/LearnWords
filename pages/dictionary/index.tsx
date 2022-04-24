@@ -21,6 +21,7 @@ import { Word } from "../../Interfaces/ProvidersInterface";
 import {
   modalStyle,
   rowStyle,
+  rowStyleDark,
   searchStyle,
   titleWordsStyle,
   wordsStyle,
@@ -89,7 +90,9 @@ const DictionaryPage = () => {
       >
         <Box
           sx={modalStyle}
-          style={{ backgroundColor: themeContext ? "#232323" : "white" }}
+          style={{
+            backgroundColor: themeContext === "dark" ? "#232323" : "white",
+          }}
         >
           <EditWord
             editId={editId}
@@ -136,7 +139,7 @@ const DictionaryPage = () => {
                   onClick={() => {
                     setWordModal(item);
                   }}
-                  sx={rowStyle}
+                  sx={themeContext === "dark" ? rowStyleDark : rowStyle}
                 >
                   <TableCell>
                     <Typography sx={wordsStyle}>
