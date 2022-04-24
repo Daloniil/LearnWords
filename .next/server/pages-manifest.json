@@ -1,12 +1,7 @@
 {
-  "/_error": "pages/_error.js",
-  "/404": "pages/404.html",
   "/_app": "pages/_app.js",
+  "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/enter": "pages/enter.html",
-  "/settings": "pages/settings.html",
-  "/stats": "pages/stats.html",
-  "/stats/[id]": "pages/stats/[id].html",
-  "/test": "pages/test.html",
-  "/dictionary": "pages/dictionary.html"
+  "/enter": "pages/enter.js",
+  "/404": "pages/404.js"
 }
