@@ -18,10 +18,14 @@ import Router from "next/router";
 
 import { DrawerBarProps } from "../../Interfaces/DrawerBarInterface";
 import { useLanguage } from "../../hooks/useLanguage";
+import { useTheme } from "../../hooks/useTheme";
 
 const useStyles = makeStyles(() => ({
   item: {
     backgroundColor: "#d3d3d3",
+  },
+  itemDark: {
+    backgroundColor: "grey",
   },
   icon: {
     margin: "0 0 0 15px",
@@ -32,6 +36,7 @@ export const DrawerBar = ({ openDrawer, setOpenDrawer }: DrawerBarProps) => {
   const { englishWords } = useWords();
   const { addNotification } = useNotification();
   const { languageContext } = useLanguage();
+  const { themeContext } = useTheme();
 
   const [drawerStatus, setDrawerStatus] = useState(false);
 
@@ -87,7 +92,13 @@ export const DrawerBar = ({ openDrawer, setOpenDrawer }: DrawerBarProps) => {
                 key={index}
                 button
                 onClick={() => redirect(item.pathName)}
-                className={item.pathName === router.asPath ? classes.item : ""}
+                className={
+                  item.pathName === router.asPath
+                    ? themeContext == "dark"
+                      ? classes.itemDark
+                      : classes.item
+                    : ""
+                }
               >
                 <ListItemText
                   primary={languageContext === "english" ? item.en : item.ru}
