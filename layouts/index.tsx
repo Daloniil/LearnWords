@@ -11,7 +11,7 @@ import { useNotification } from "../hooks/useNotification";
 import { useTheme } from "../hooks/useTheme";
 import { useWords } from "../hooks/useWords";
 import { LayoutProps } from "../Interfaces/LayoutInterface";
-import { NotificationKeys, WordsParams } from "../services/localKey";
+import { Mode, NotificationKeys, WordsParams } from "../services/localKey";
 import { paths } from "../utils/path";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 
@@ -22,7 +22,7 @@ const Layout = ({ children }: LayoutProps) => {
   const { languageContext } = useLanguage();
   const { themeContext } = useTheme();
 
-  const [mode, setMode] = useState<"dark" | "light">("light");
+  const [mode, setMode] = useState<Mode.DARK | Mode.LIGHT>(Mode.LIGHT);
 
   const [open, setOpen] = useState(false);
   const items = paths.find((path) => path.pathName === router.asPath);
@@ -53,7 +53,9 @@ const Layout = ({ children }: LayoutProps) => {
   }, []);
 
   useEffect(() => {
-    setMode(themeContext ? (themeContext as "dark" | "light") : "light");
+    setMode(
+      themeContext ? (themeContext as Mode.DARK | Mode.LIGHT) : Mode.LIGHT
+    );
   }, [themeContext]);
 
   return (

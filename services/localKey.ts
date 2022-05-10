@@ -40,3 +40,8 @@ export enum ContextKey {
   RUSSIAN = "app-russian",
   THEME = "app-theme",
 }
+
+export enum Mode {
+  DARK = "dark",
+  LIGHT = "light",
+}
