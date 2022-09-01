@@ -6,7 +6,7 @@ import {
   buttonContainerStyle,
   buttonStyle,
   titleStyle,
-} from "../../Styles/RestartTestStyle";
+} from "../../styles/RestartTestStyle";
 import { restartTestTranslation } from "../../translation/RestartTest";
 import { setTranslation } from "../../utils/setTranslation";
 

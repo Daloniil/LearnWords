@@ -18,31 +18,39 @@ import {
   modalContainerStyle,
   textFieldStyle,
   titleStyle,
-} from "../../Styles/EnterStyle";
+} from "../../styles/EnterStyle";
 import {
   ContextKey,
   LanguageKeys,
+  LoginStatus,
   NotificationKeys,
   WordsParams,
 } from "../../services/localKey";
 import { findLongestWord } from "../../utils/longWord";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Translation } from "../../models/translation/translation";
 import { TranslationService } from "../../services/translationService";
 import { TranslationData } from "../../models/translation/translationResult";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useEnter } from "../../hooks/useEnter";
-import { boxTranslationStyle, loadingStyle } from "../../Styles/TestStyle";
+import { boxTranslationStyle, loadingStyle } from "../../styles/TestStyle";
 import { enterTranslation } from "../../translation/Enter";
 import { useLanguage } from "../../hooks/useLanguage";
 import { setTranslation } from "../../utils/setTranslation";
+import { getAuth } from "firebase/auth";
+import { collection, getDocs, getFirestore } from "firebase/firestore";
+import { firebaseConfig } from "../../firebase-config";
+import { useLogin } from "../../hooks/useLogin";
 
 const EnterPage = () => {
   const { addNotification } = useNotification();
   const { findWords } = useSearch();
   const { words, addWord, addUpdateWord } = useEnter();
   const { languageContext } = useLanguage();
+  const { checkingLogin } = useLogin();
+
+  const auth = getAuth(firebaseConfig);
 
   const [translateEnglish, setTranslateEnglish] = useState("");
   const debouncedSearchValue = useDebounce(translateEnglish, 200);
@@ -137,6 +145,26 @@ const EnterPage = () => {
     handleTranslate([{ Text: debouncedSearchValue }]);
   }, [debouncedSearchValue]);
 
+  const getWordForUser = () => {
+    if (auth.currentUser) {
+      const db = getFirestore();
+      const colRef = collection(db, "words");
+      console.log(auth.currentUser?.uid);
+      getDocs(colRef).then((snapshot) => {
+        snapshot.docs.forEach((doc) => {
+          const data = doc.data();
+          if (data.useruid === auth.currentUser?.uid) {
+            console.log(data);
+          }
+        });
+      });
+    }
+  };
+
+  useEffect(() => {
+    checkingLogin(LoginStatus.OTHER);
+  }, []);
+
   return (
     <>
       <Box sx={titleStyle}>{translation("enterWord")}</Box>
@@ -218,6 +246,8 @@ const EnterPage = () => {
           {translation("addButton")}
         </Button>
       </form>
+      <Button onClick={getWordForUser}>Get Words</Button>
+      {/* <Button onClick={signOutWithGoogle}>Log Out</Button> */}
     </>
   );
 };

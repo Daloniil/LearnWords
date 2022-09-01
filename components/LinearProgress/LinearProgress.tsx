@@ -1,5 +1,5 @@
 import { Box, LinearProgress, LinearProgressProps } from "@mui/material";
-import { linearStyle } from "../../Styles/TestStyle";
+import { linearStyle } from "../../styles/TestStyle";
 
 export const LinearProgressWithLabel = (
   props: LinearProgressProps & { value: number }

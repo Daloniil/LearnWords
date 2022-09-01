@@ -25,18 +25,30 @@ import {
   searchStyle,
   titleWordsStyle,
   wordsStyle,
-} from "../../Styles/DictionaryStyle";
+} from "../../styles/DictionaryStyle";
+import {
+  collection,
+  DocumentData,
+  getDocs,
+  getFirestore,
+} from "firebase/firestore";
 import { EditWord } from "../../components/EditWord";
 import { useLanguage } from "../../hooks/useLanguage";
 import { dictionaryTranslation } from "../../translation/Dictionary";
 import { setTranslation } from "../../utils/setTranslation";
 import { useTheme } from "../../hooks/useTheme";
+import { LoginStatus } from "../../services/localKey";
+import { useLogin } from "../../hooks/useLogin";
+import { getAuth } from "firebase/auth";
+import { firebaseConfig } from "../../firebase-config";
 
 const DictionaryPage = () => {
   const { englishWords } = useWords();
   const { search } = useSearch();
   const { languageContext } = useLanguage();
   const { themeContext } = useTheme();
+  const { checkingLogin } = useLogin();
+  const auth = getAuth(firebaseConfig);
 
   const [words, setWords] = useState(englishWords);
   const [statusDelete, setStatusDelete] = useState(false);
@@ -79,6 +91,29 @@ const DictionaryPage = () => {
       setWords(englishWords);
     }
   }, [englishWords, searchWord]);
+
+  const getWordForUser = () => {
+    if (auth.currentUser) {
+      const db = getFirestore();
+      const colRef = collection(db, "words");
+      getDocs(colRef).then((snapshot) => {
+        snapshot.docs.forEach((doc) => {
+          const data = doc.data();
+          if (data.useruid === auth.currentUser?.uid) {
+            // console.log(data.englishWords);
+            // //@ts-ignore
+            setWords(data.englishWords);
+            // console.log(data);
+          }
+        });
+      });
+    }
+  };
+
+  useEffect(() => {
+    checkingLogin(LoginStatus.OTHER);
+    getWordForUser();
+  }, []);
 
   return (
     <>

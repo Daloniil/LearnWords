@@ -19,14 +19,14 @@ import {
   variantsBoxStyle,
   variantStyle,
   variantTestStyle,
-} from "../../Styles/TestStyle";
+} from "../../styles/TestStyle";
 import { shuffle } from "../../utils/shuffle";
 import Router from "next/router";
 import { useTest } from "../../hooks/useTest";
 import { amountPoint } from "../../utils/amountPoint";
 import { LinearProgressWithLabel } from "../../components/LinearProgress/LinearProgress";
 import { useTestContext } from "../../hooks/useTestContext";
-import { modalStyle } from "../../Styles/DictionaryStyle";
+import { modalStyle } from "../../styles/DictionaryStyle";
 import { RestartTest } from "../../components/RestartTest";
 import { useLanguage } from "../../hooks/useLanguage";
 import { testTranslation } from "../../translation/Test";

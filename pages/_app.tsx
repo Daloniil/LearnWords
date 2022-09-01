@@ -1,10 +1,10 @@
 import React from "react";
 import type { AppProps } from "next/app";
+import Layout from "../layouts";
+
 import { NotificationProvider } from "../providers/NotificationProvider";
 import { Notification } from "../components/Notification";
 import { WordsProvider } from "../providers/WordsProvider";
-
-import Layout from "../layouts";
 import { TestProvider } from "../providers/TestProvider";
 import { LanguageProvider } from "../providers/LanguageProvider";
 import { StatsProvider } from "../providers/StatsProvider";

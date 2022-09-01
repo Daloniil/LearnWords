@@ -45,3 +45,8 @@ export enum Mode {
   DARK = "dark",
   LIGHT = "light",
 }
+
+export enum LoginStatus {
+  LOGIN = "login",
+  OTHER = "other",
+}
