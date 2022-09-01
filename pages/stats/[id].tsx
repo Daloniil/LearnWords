@@ -10,7 +10,7 @@ import {
   indentsBoxStyle,
   statBoxStyle,
   statsTitleStyle,
-} from "../../styles/StatsStyle";
+} from "../../Styles/StatsStyle";
 import { OneStat } from "../../Interfaces/ProvidersInterface";
 
 const Stat = () => {

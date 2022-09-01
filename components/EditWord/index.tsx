@@ -18,7 +18,7 @@ import {
   modalContainerStyle,
   textFieldStyle,
   titleStyle,
-} from "../../styles/EditWordStyle";
+} from "../../Styles/EditWordStyle";
 import { WordEditProps } from "../../Interfaces/EditWordInterface";
 import { Enter } from "../../Interfaces/EnterInterface";
 import { lowerText } from "../../utils/lowerText";

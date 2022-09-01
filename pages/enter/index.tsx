@@ -18,7 +18,7 @@ import {
   modalContainerStyle,
   textFieldStyle,
   titleStyle,
-} from "../../styles/EnterStyle";
+} from "../../Styles/EnterStyle";
 import {
   ContextKey,
   LanguageKeys,
@@ -34,7 +34,7 @@ import { TranslationService } from "../../services/translationService";
 import { TranslationData } from "../../models/translation/translationResult";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useEnter } from "../../hooks/useEnter";
-import { boxTranslationStyle, loadingStyle } from "../../styles/TestStyle";
+import { boxTranslationStyle, loadingStyle } from "../../Styles/TestStyle";
 import { enterTranslation } from "../../translation/Enter";
 import { useLanguage } from "../../hooks/useLanguage";
 import { setTranslation } from "../../utils/setTranslation";

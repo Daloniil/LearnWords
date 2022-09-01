@@ -12,7 +12,7 @@ import {
   statsBoxStyle,
   statsTitleStyle,
   titleTestStyle,
-} from "../../styles/StatsStyle";
+} from "../../Styles/StatsStyle";
 
 const StatsPage = () => {
   const { stats, deleteStats } = useStats();

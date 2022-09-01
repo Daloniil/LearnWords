@@ -25,13 +25,8 @@ import {
   searchStyle,
   titleWordsStyle,
   wordsStyle,
-} from "../../styles/DictionaryStyle";
-import {
-  collection,
-  DocumentData,
-  getDocs,
-  getFirestore,
-} from "firebase/firestore";
+} from "../../Styles/DictionaryStyle";
+import { collection, getDocs, getFirestore } from "firebase/firestore";
 import { EditWord } from "../../components/EditWord";
 import { useLanguage } from "../../hooks/useLanguage";
 import { dictionaryTranslation } from "../../translation/Dictionary";
