@@ -36,7 +36,6 @@ const useStyles = makeStyles(() => ({
 export const DrawerBar = ({ openDrawer, setOpenDrawer }: DrawerBarProps) => {
   const { languageContext } = useLanguage();
   const { themeContext } = useTheme();
-  const { getWord, wordsHook } = useLogin();
 
   const [drawerStatus, setDrawerStatus] = useState(false);
 

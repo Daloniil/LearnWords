@@ -25,7 +25,7 @@ export const Bar = ({ title, setOpen }: BarProps) => {
   return (
     <AppBar position="absolute">
       <Toolbar>
-        {authContext.user ? (
+        {authContext.user.uid ? (
           <IconButton
             edge="start"
             aria-label="open drawer"
