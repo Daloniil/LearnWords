@@ -44,7 +44,7 @@ const SettingsPage = () => {
   };
 
   const checkingLogin = () => {
-    if (!authContext.user) {
+    if (!authContext.user.uid) {
       setUser("");
       Router.push("/login");
     } else {
