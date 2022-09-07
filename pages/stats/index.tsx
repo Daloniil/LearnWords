@@ -31,6 +31,7 @@ const StatsPage = () => {
   };
 
   useEffect(() => {
+    //@ts-ignore
     setStats(statsHook);
     setStatusLoading(false);
   }, [statsHook]);
