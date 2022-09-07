@@ -1,11 +1,8 @@
-import { useWords } from "./useWords";
 import { Word } from "../Interfaces/ProvidersInterface";
 import { ColorKeys, StatusFind } from "../services/localKey";
 import { shuffle } from "../utils/shuffle";
 
 export const useTest = () => {
-  const { englishWords, russianWords } = useWords();
-
   const getRandom = (max: number, optionsWord: Word[], correctWord: string) => {
     const indices = [] as number[];
     for (let i = 0; indices.length <= 2; i++) {
@@ -20,17 +17,31 @@ export const useTest = () => {
     return indices;
   };
 
-  const findLangWord = (correctWord: string, status: string) => {
+  const findLangWord = (
+    correctWord: string,
+    status: string,
+    englishWords: Word[],
+    russianWords: Word[]
+  ) => {
     if (englishWords.find((item) => item.correctTranslation === correctWord)) {
       return status === StatusFind.OPTIONS ? englishWords : StatusFind.EN;
     }
     return status === StatusFind.OPTIONS ? russianWords : StatusFind.RU;
   };
 
-  const createVariantsWord = (testWords: string) => {
+  const createVariantsWord = (
+    testWords: string,
+    englishWords: Word[],
+    russianWords: Word[]
+  ) => {
     const correctWord = testWords;
     const options = [correctWord];
-    const optionsWord = findLangWord(correctWord, StatusFind.OPTIONS);
+    const optionsWord = findLangWord(
+      correctWord,
+      StatusFind.OPTIONS,
+      englishWords,
+      russianWords
+    );
 
     if (typeof optionsWord !== "string") {
       const indices = getRandom(optionsWord.length, optionsWord, correctWord);
@@ -40,9 +51,18 @@ export const useTest = () => {
     }
   };
 
-  const recreateWords = (testWords: Word[]) => {
+  const recreateWords = (
+    testWords: Word[],
+    englishWords: Word[],
+    russianWords: Word[]
+  ) => {
     const selectWord = testWords[0];
-    const selectLang = findLangWord(selectWord.word, StatusFind.LANG);
+    const selectLang = findLangWord(
+      selectWord.word,
+      StatusFind.LANG,
+      englishWords,
+      russianWords
+    );
     const addWords = [];
 
     const newWord = {

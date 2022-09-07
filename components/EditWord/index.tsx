@@ -4,15 +4,7 @@ import { Box, Button, capitalize, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
-import { useNotification } from "../../hooks/useNotification";
-import { useSearch } from "../../hooks/useSearch";
-import { useWords } from "../../hooks/useWords";
-import {
-  ContextKey,
-  LanguageKeys,
-  NotificationKeys,
-  WordsParams,
-} from "../../services/localKey";
+import { LanguageKeys, WordsParams } from "../../services/localKey";
 import {
   buttonStyle,
   modalContainerStyle,
@@ -26,6 +18,7 @@ import { findLongestWord } from "../../utils/longWord";
 import { editWordTranslation } from "../../translation/EditWord";
 import { useLanguage } from "../../hooks/useLanguage";
 import { setTranslation } from "../../utils/setTranslation";
+import { useLogin } from "../../hooks/useLogin";
 
 const emptyField = "This Field Cannot Be Empty";
 
@@ -38,11 +31,10 @@ export const EditWord = ({
   editId,
   wordEdit,
   handleCloseModal,
+  setStatusLoadingUser,
 }: WordEditProps) => {
-  const { findWords } = useSearch();
-  const { addNotification } = useNotification();
-  const { deleteWord, updateWord } = useWords();
   const { languageContext } = useLanguage();
+  const { updateWord, deleteWord } = useLogin();
 
   const [statusDelete, setStatusDelete] = useState(false);
 
@@ -65,8 +57,6 @@ export const EditWord = ({
       englishWord: "",
       russianWord: "",
     });
-    addNotification("wordEdit", NotificationKeys.SUCCESS);
-
     handleCloseModal();
   };
 
@@ -89,44 +79,21 @@ export const EditWord = ({
     return status;
   };
 
-  const update = (data: Enter, key: string, id: number) => {
-    const newWord = {
-      id: id,
-      word: key === ContextKey.ENGLISH ? data.englishWord : data.russianWord,
-      correctTranslation:
-        key === ContextKey.ENGLISH ? data.russianWord : data.englishWord,
-      point: 0,
-    };
-
-    updateWord(newWord, key);
-  };
-
-  const editWord = (data: Enter) => {
-    const keys = [ContextKey.ENGLISH, ContextKey.RUSSIAN];
-    const repeatingWord = [] as string[];
-    keys.forEach((lang) => {
-      if (findWords(data, lang)) {
-        repeatingWord.push(lang);
-      }
-    });
-
-    if (repeatingWord.length > 1) {
-      addNotification("hasAlready", NotificationKeys.ERROR);
-      return;
-    }
-
-    update(data, ContextKey.ENGLISH, editId);
-    update(data, ContextKey.RUSSIAN, editId);
-
+  const update = async (data: Enter, id: number) => {
+    setStatusLoadingUser(true);
+    await updateWord(id, data);
     updateModal();
   };
 
-  const handleDeleteWord = (id: number) => {
-    deleteWord(id, ContextKey.ENGLISH);
-    deleteWord(id, ContextKey.RUSSIAN);
+  const editWord = (data: Enter) => {
+    update(data, editId);
+  };
+
+  const handleDeleteWord = async (id: number) => {
+    await deleteWord(id);
     setStatusDelete(true);
-    addNotification("wordDelete", NotificationKeys.SUCCESS);
     handleCloseModal();
+    setStatusLoadingUser(true);
   };
 
   const translation = (key: string) => {

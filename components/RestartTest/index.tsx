@@ -15,7 +15,7 @@ export const RestartTest = ({
   restartTest,
 }: RestartTestProps) => {
   const { languageContext } = useLanguage();
-  const { addStats } = useStats();
+  const { addStatsServer } = useStats();
 
   const translation = (key: string) => {
     return setTranslation(key, restartTestTranslation, languageContext);
@@ -28,7 +28,7 @@ export const RestartTest = ({
       <Box sx={buttonContainerStyle}>
         <Button
           onClick={() => {
-            restartTest(), addStats();
+            restartTest(), addStatsServer();
           }}
           variant="contained"
           color="success"

@@ -6,6 +6,21 @@ export type WordsContextType = {
   deleteWord: (index: number, key: string) => void;
 };
 
+export type AuthContextType = {
+  authContext: Auth;
+  setAuth: (auth: Auth) => void;
+  removeAuth: () => void;
+};
+
+export type Auth = {
+  user: CurrentUser;
+};
+
+export type CurrentUser = {
+  uid: string;
+  displayName: string;
+};
+
 export type Word = {
   id: number;
   word: string;
@@ -23,16 +38,6 @@ export type NotificationContextType = {
 export type TitleContextType = {
   title: string | null;
   addTitle: (title: string) => void;
-};
-
-export type TestContextType = {
-  testWordsContext: Word[];
-  wordVariantsContext: string[];
-  percentTestContext: number;
-  setTestWordsContext: (word: Word[]) => void;
-  setWordVariantsContext: (word: string[]) => void;
-  setPercentContext: (percent: number) => void;
-  deleteTestContext: () => void;
 };
 
 export type LanguageContextType = {

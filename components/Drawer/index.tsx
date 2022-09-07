@@ -19,6 +19,7 @@ import Router from "next/router";
 import { DrawerBarProps } from "../../Interfaces/DrawerBarInterface";
 import { useLanguage } from "../../hooks/useLanguage";
 import { useTheme } from "../../hooks/useTheme";
+import { useLogin } from "../../hooks/useLogin";
 
 const useStyles = makeStyles(() => ({
   item: {
@@ -33,10 +34,9 @@ const useStyles = makeStyles(() => ({
 }));
 
 export const DrawerBar = ({ openDrawer, setOpenDrawer }: DrawerBarProps) => {
-  const { englishWords } = useWords();
-  const { addNotification } = useNotification();
   const { languageContext } = useLanguage();
   const { themeContext } = useTheme();
+  const { getWord, wordsHook } = useLogin();
 
   const [drawerStatus, setDrawerStatus] = useState(false);
 
@@ -45,12 +45,7 @@ export const DrawerBar = ({ openDrawer, setOpenDrawer }: DrawerBarProps) => {
   const classes = useStyles();
 
   const redirect = (pathName: string) => {
-    if (englishWords.length <= WordsParams.MINLENGTH && pathName === "/test") {
-      addNotification("leastFive", NotificationKeys.ERROR);
-      Router.push("/enter");
-    } else {
-      Router.push(pathName);
-    }
+    Router.push(pathName);
   };
 
   const toggleDrawer =

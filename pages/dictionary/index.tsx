@@ -1,6 +1,7 @@
 import {
   Box,
   capitalize,
+  CircularProgress,
   Modal,
   Paper,
   Table,
@@ -14,7 +15,6 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { useEffect, useState } from "react";
-import { useWords } from "../../hooks/useWords";
 
 import { useSearch } from "../../hooks/useSearch";
 import { Word } from "../../Interfaces/ProvidersInterface";
@@ -26,7 +26,6 @@ import {
   titleWordsStyle,
   wordsStyle,
 } from "../../Styles/DictionaryStyle";
-import { collection, getDocs, getFirestore } from "firebase/firestore";
 import { EditWord } from "../../components/EditWord";
 import { useLanguage } from "../../hooks/useLanguage";
 import { dictionaryTranslation } from "../../translation/Dictionary";
@@ -34,26 +33,24 @@ import { setTranslation } from "../../utils/setTranslation";
 import { useTheme } from "../../hooks/useTheme";
 import { LoginStatus } from "../../services/localKey";
 import { useLogin } from "../../hooks/useLogin";
-import { getAuth } from "firebase/auth";
-import { firebaseConfig } from "../../firebase-config";
 
 const DictionaryPage = () => {
-  const { englishWords } = useWords();
   const { search } = useSearch();
   const { languageContext } = useLanguage();
   const { themeContext } = useTheme();
-  const { checkingLogin } = useLogin();
-  const auth = getAuth(firebaseConfig);
+  const { checkingLogin, getWord, wordsHook } = useLogin();
 
-  const [words, setWords] = useState(englishWords);
+  const [words, setWords] = useState([] as Word[]);
   const [statusDelete, setStatusDelete] = useState(false);
   const [editWord, setEditWord] = useState({} as Word);
   const [searchWord, setSearchWord] = useState("");
   const [editId, setEditId] = useState(0);
   const [openModal, setOpenModal] = useState(false);
+  const [statusLoading, setStatusLoadingUser] = useState(false);
 
   const handleCloseModal = () => {
     setOpenModal(!openModal);
+    getWord();
   };
 
   const textFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,7 +58,7 @@ const DictionaryPage = () => {
   };
 
   const searchingWord = () => {
-    const wordsArray = search(englishWords, searchWord);
+    const wordsArray = search(words, searchWord);
     setWords(wordsArray);
   };
 
@@ -83,31 +80,20 @@ const DictionaryPage = () => {
     if (searchWord) {
       searchingWord();
     } else {
-      setWords(englishWords);
+      setStatusLoadingUser(true);
+      getWord();
     }
-  }, [englishWords, searchWord]);
+  }, [searchWord]);
 
-  const getWordForUser = () => {
-    if (auth.currentUser) {
-      const db = getFirestore();
-      const colRef = collection(db, "words");
-      getDocs(colRef).then((snapshot) => {
-        snapshot.docs.forEach((doc) => {
-          const data = doc.data();
-          if (data.useruid === auth.currentUser?.uid) {
-            // console.log(data.englishWords);
-            // //@ts-ignore
-            setWords(data.englishWords);
-            // console.log(data);
-          }
-        });
-      });
-    }
-  };
+  useEffect(() => {
+    setWords(wordsHook);
+    setStatusLoadingUser(false);
+  }, [wordsHook]);
 
   useEffect(() => {
     checkingLogin(LoginStatus.OTHER);
-    getWordForUser();
+    setStatusLoadingUser(true);
+    getWord();
   }, []);
 
   return (
@@ -128,6 +114,7 @@ const DictionaryPage = () => {
             editId={editId}
             wordEdit={editWord}
             handleCloseModal={handleCloseModal}
+            setStatusLoadingUser={setStatusLoadingUser}
           />
         </Box>
       </Modal>
@@ -162,28 +149,38 @@ const DictionaryPage = () => {
                 </TableCell>
               </TableRow>
             </TableHead>
-            <TableBody>
-              {words.map((item, index) => (
-                <TableRow
-                  key={index}
-                  onClick={() => {
-                    setWordModal(item);
-                  }}
-                  sx={themeContext === "dark" ? rowStyleDark : rowStyle}
-                >
-                  <TableCell>
-                    <Typography sx={wordsStyle}>
-                      {capitalize(item.word)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell onClick={handleCloseModal}>
-                    <Typography sx={wordsStyle}>
-                      {capitalize(item.correctTranslation)}
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
+            {statusLoading ? (
+              <CircularProgress
+                sx={{
+                  minWidth: "100px",
+                  minHeight: "100px",
+                  margin: "25px 0 25px 90%",
+                }}
+              />
+            ) : (
+              <TableBody>
+                {words.map((item, index) => (
+                  <TableRow
+                    key={index}
+                    onClick={() => {
+                      setWordModal(item);
+                    }}
+                    sx={themeContext === "dark" ? rowStyleDark : rowStyle}
+                  >
+                    <TableCell>
+                      <Typography sx={wordsStyle}>
+                        {capitalize(item.word)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell onClick={handleCloseModal}>
+                      <Typography sx={wordsStyle}>
+                        {capitalize(item.correctTranslation)}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            )}
           </Table>
         </TableContainer>
       </Paper>

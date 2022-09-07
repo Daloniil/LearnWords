@@ -39,6 +39,7 @@ export enum ContextKey {
   ENGLISH = "app-english",
   RUSSIAN = "app-russian",
   THEME = "app-theme",
+  AUTH = "app-auth",
 }
 
 export enum Mode {

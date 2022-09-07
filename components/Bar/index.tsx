@@ -5,9 +5,11 @@ import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
 import { BarProps } from "../../Interfaces/BarInterface";
+import { useAuth } from "../../hooks/useAuth";
 
 export const Bar = ({ title, setOpen }: BarProps) => {
   const drawerWidth: number = 240;
+  const { authContext } = useAuth();
 
   const AppBar = styled(MuiAppBar)(({ theme }) => ({
     zIndex: 1,
@@ -23,13 +25,18 @@ export const Bar = ({ title, setOpen }: BarProps) => {
   return (
     <AppBar position="absolute">
       <Toolbar>
-        <IconButton
-          edge="start"
-          aria-label="open drawer"
-          onClick={() => setOpen(true)}
-        >
-          <MenuIcon />
-        </IconButton>
+        {authContext.user ? (
+          <IconButton
+            edge="start"
+            aria-label="open drawer"
+            onClick={() => setOpen(true)}
+          >
+            <MenuIcon />
+          </IconButton>
+        ) : (
+          ""
+        )}
+
         <Typography
           component="h1"
           variant="h6"

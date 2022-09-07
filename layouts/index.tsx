@@ -14,11 +14,11 @@ import { LayoutProps } from "../Interfaces/LayoutInterface";
 import { Mode, NotificationKeys, WordsParams } from "../services/localKey";
 import { paths } from "../utils/path";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { useLogin } from "../hooks/useLogin";
+import { Word } from "../Interfaces/ProvidersInterface";
 
 const Layout = ({ children }: LayoutProps) => {
   const router = useRouter();
-  const { englishWords } = useWords();
-  const { addNotification } = useNotification();
   const { languageContext } = useLanguage();
   const { themeContext } = useTheme();
 
@@ -26,9 +26,6 @@ const Layout = ({ children }: LayoutProps) => {
 
   const [open, setOpen] = useState(false);
   const items = paths.find((path) => path.pathName === router.asPath);
-
-  const status =
-    englishWords.length <= WordsParams.MINLENGTH && router.asPath === "/test";
 
   const theme = createTheme({
     palette: {
@@ -44,13 +41,6 @@ const Layout = ({ children }: LayoutProps) => {
       },
     },
   });
-
-  useEffect(() => {
-    if (status) {
-      addNotification("leastFive", NotificationKeys.ERROR);
-      Router.push("/enter");
-    }
-  }, []);
 
   useEffect(() => {
     setMode(
@@ -85,7 +75,7 @@ const Layout = ({ children }: LayoutProps) => {
           <Toolbar />
           <Container maxWidth="lg" sx={{ mt: 4, mb: 4, width: "100vw" }}>
             <Paper sx={{ p: 2, display: "flex", flexDirection: "column" }}>
-              {!status ? children : ""}
+              {children}
             </Paper>
           </Container>
         </Box>
