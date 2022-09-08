@@ -51,9 +51,11 @@ const DictionaryPage = () => {
   const [statusDelete, setStatusDelete] = useState(false);
   const [editWord, setEditWord] = useState({} as Word);
   const [searchWord, setSearchWord] = useState("");
+
   const [editId, setEditId] = useState(0);
   const [openModal, setOpenModal] = useState(false);
   const [statusLoading, setStatusLoadingUser] = useState(false);
+  const [windowHieght, setWindowHieght] = useState(550);
 
   const uploadWord = async () => {
     if (authContext.user) {
@@ -112,6 +114,7 @@ const DictionaryPage = () => {
 
   useEffect(() => {
     setWords(wordsHook);
+    setWindowHieght(window.outerHeight);
     setStatusLoadingUser(false);
   }, [wordsHook]);
 
@@ -172,7 +175,9 @@ const DictionaryPage = () => {
       />
 
       <Paper sx={{ overflow: "hidden" }}>
-        <TableContainer sx={{ maxHeight: 520, margin: "0 0 0 0" }}>
+        <TableContainer
+          sx={{ maxHeight: (windowHieght / 100) * 65, margin: "0 0 0 0" }}
+        >
           <Table stickyHeader aria-label="sticky table">
             <TableHead>
               <TableRow>
