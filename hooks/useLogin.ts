@@ -39,9 +39,17 @@ export const useLogin = () => {
   };
 
   const checkingLogin = (status: string) => {
-    if (!authContext.user.uid && status === LoginStatus.OTHER) {
+    if (
+      authContext.user &&
+      !authContext.user.uid &&
+      status === LoginStatus.OTHER
+    ) {
       Router.push("/login");
-    } else if (authContext.user.uid && status === LoginStatus.LOGIN) {
+    } else if (
+      authContext.user &&
+      authContext.user.uid &&
+      status === LoginStatus.LOGIN
+    ) {
       Router.push("/enter");
     }
   };
