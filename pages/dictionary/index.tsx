@@ -55,7 +55,6 @@ const DictionaryPage = () => {
   const [openModal, setOpenModal] = useState(false);
   const [statusLoading, setStatusLoadingUser] = useState(false);
 
-  console.log(englishWords);
   const uploadWord = async () => {
     if (authContext.user) {
       const db = getFirestore();
@@ -160,7 +159,7 @@ const DictionaryPage = () => {
       />
 
       <Paper sx={{ overflow: "hidden" }}>
-        <TableContainer sx={{ maxHeight: 625 }}>
+        <TableContainer sx={{ maxHeight: 550 }}>
           <Table stickyHeader aria-label="sticky table">
             <TableHead>
               <TableRow>
