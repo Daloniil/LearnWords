@@ -3,7 +3,7 @@ import { useEffect } from "react";
 
 const ErrorPage = () => {
   useEffect(() => {
-    Router.push("/enter");
+    Router.push("/login");
   }, []);
   return <></>;
 };
