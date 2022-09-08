@@ -176,7 +176,7 @@ const DictionaryPage = () => {
 
       <Paper sx={{ overflow: "hidden" }}>
         <TableContainer
-          sx={{ maxHeight: (windowHieght / 100) * 65, margin: "0 0 0 0" }}
+          sx={{ maxHeight: (windowHieght / 100) * 63, margin: "0 0 0 0" }}
         >
           <Table stickyHeader aria-label="sticky table">
             <TableHead>
