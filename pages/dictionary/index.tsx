@@ -140,7 +140,12 @@ const DictionaryPage = () => {
           />
         </Box>
       </Modal>
-      <Button onClick={() => uploadWord()}>Upload Word</Button>
+      {englishWords.length > 0 ? (
+        <Button onClick={() => uploadWord()}>Upload Word</Button>
+      ) : (
+        ""
+      )}
+
       <TextField
         hiddenLabel
         id="filled-hidden-label-small"
