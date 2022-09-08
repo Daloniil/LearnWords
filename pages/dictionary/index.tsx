@@ -1,5 +1,6 @@
 import {
   Box,
+  Button,
   capitalize,
   CircularProgress,
   Modal,
@@ -33,12 +34,18 @@ import { setTranslation } from "../../utils/setTranslation";
 import { useTheme } from "../../hooks/useTheme";
 import { LoginStatus } from "../../services/localKey";
 import { useLogin } from "../../hooks/useLogin";
+import { useWords } from "../../hooks/useWords";
+import { useAuth } from "../../hooks/useAuth";
+import { doc, getDoc, getFirestore, setDoc } from "firebase/firestore";
 
 const DictionaryPage = () => {
   const { search } = useSearch();
   const { languageContext } = useLanguage();
   const { themeContext } = useTheme();
   const { checkingLogin, getWord, wordsHook } = useLogin();
+  const { authContext } = useAuth();
+
+  const { englishWords, russianWords } = useWords();
 
   const [words, setWords] = useState([] as Word[]);
   const [statusDelete, setStatusDelete] = useState(false);
@@ -47,6 +54,21 @@ const DictionaryPage = () => {
   const [editId, setEditId] = useState(0);
   const [openModal, setOpenModal] = useState(false);
   const [statusLoading, setStatusLoadingUser] = useState(false);
+
+  console.log(englishWords);
+  const uploadWord = async () => {
+    if (authContext.user) {
+      const db = getFirestore();
+      const docRef = doc(db, "words", authContext.user.uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        let arr = docSnap.data();
+        arr.englishWords = englishWords;
+        arr.russianWords = russianWords;
+        setDoc(docRef, arr);
+      }
+    }
+  };
 
   const handleCloseModal = () => {
     setOpenModal(!openModal);
@@ -118,7 +140,7 @@ const DictionaryPage = () => {
           />
         </Box>
       </Modal>
-
+      <Button onClick={() => uploadWord()}>Upload Word</Button>
       <TextField
         hiddenLabel
         id="filled-hidden-label-small"
