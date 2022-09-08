@@ -63,6 +63,9 @@ export class LocalStorageService {
 
   public static removeAuth(session = false) {
     const storage = session ? sessionStorage : localStorage;
-    storage.setItem(ContextKey.AUTH, JSON.stringify({}));
+    storage.setItem(
+      ContextKey.AUTH,
+      JSON.stringify({ user: { displayName: "", uid: "" } })
+    );
   }
 }
