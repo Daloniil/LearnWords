@@ -69,6 +69,10 @@ const DictionaryPage = () => {
     }
   };
 
+  const resetLocal = async () => {
+    localStorage.clear();
+  };
+
   const handleCloseModal = () => {
     setOpenModal(!openModal);
     getWord();
@@ -140,7 +144,16 @@ const DictionaryPage = () => {
         </Box>
       </Modal>
       {englishWords.length > 0 ? (
-        <Button onClick={() => uploadWord()}>Upload Word</Button>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-around",
+            margin: "0 0 10px 0",
+          }}
+        >
+          <Button onClick={() => uploadWord()}>Upload Word</Button>
+          <Button onClick={() => resetLocal()}>Clear</Button>
+        </Box>
       ) : (
         ""
       )}
