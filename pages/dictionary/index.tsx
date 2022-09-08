@@ -159,7 +159,7 @@ const DictionaryPage = () => {
       />
 
       <Paper sx={{ overflow: "hidden" }}>
-        <TableContainer sx={{ maxHeight: 550 }}>
+        <TableContainer sx={{ maxHeight: 520, margin: "0 0 0 0" }}>
           <Table stickyHeader aria-label="sticky table">
             <TableHead>
               <TableRow>
