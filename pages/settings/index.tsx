@@ -1,16 +1,12 @@
 import {
   Box,
-  CircularProgress,
-  InputLabel,
   MenuItem,
   Select,
   SelectChangeEvent,
   Typography,
 } from "@mui/material";
-import { getAuth } from "firebase/auth";
 import Router from "next/router";
 import { useEffect, useState } from "react";
-import { firebaseConfig } from "../../firebase-config";
 import { useAuth } from "../../hooks/useAuth";
 import { useLanguage } from "../../hooks/useLanguage";
 import { useLogin } from "../../hooks/useLogin";
@@ -22,12 +18,11 @@ const SettingsPage = () => {
   const { languageContext, setLanguageContext } = useLanguage();
   const { themeContext, setThemeContext } = useTheme();
   const { signOutGoogle } = useLogin();
-  const { authContext, setAuth, removeAuth } = useAuth();
+  const { authContext } = useAuth();
 
   const [language, setLanguage] = useState(languageContext);
   const [theme, setTheme] = useState(themeContext);
   const [user, setUser] = useState("");
-  const [openLoading, setOpenLoading] = useState(false);
 
   const handleChangeLanguage = (event: SelectChangeEvent) => {
     setLanguage(event.target.value as string);
@@ -58,93 +53,81 @@ const SettingsPage = () => {
 
   return (
     <>
-      {openLoading ? (
-        <CircularProgress
+      <Box sx={{ display: "flex" }}>
+        <Typography
           sx={{
-            minWidth: "100px",
-            minHeight: "100px",
-            margin: "50px auto 50px auto",
+            fontSize: "20px",
+            textAlign: "center",
+            fontWeight: "bold",
+            margin: "10px 10px 5px 0",
           }}
-        />
-      ) : (
-        <>
-          <Box sx={{ display: "flex" }}>
-            <Typography
-              sx={{
-                fontSize: "20px",
-                textAlign: "center",
-                fontWeight: "bold",
-                margin: "10px 10px 5px 0",
-              }}
-            >
-              {user}
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: "20px",
-                textAlign: "center",
-                fontWeight: "bold",
-                margin: "10px 10px 5px 0",
-                cursor: "pointer",
-              }}
-              onClick={signOutGoogle}
-            >
-              Log out
-            </Typography>
-          </Box>
+        >
+          {user}
+        </Typography>
+        <Typography
+          sx={{
+            fontSize: "20px",
+            textAlign: "center",
+            fontWeight: "bold",
+            margin: "10px 10px 5px 0",
+            cursor: "pointer",
+          }}
+          onClick={signOutGoogle}
+        >
+          Log out
+        </Typography>
+      </Box>
 
-          <Box sx={{ display: "flex" }}>
-            <Typography
-              sx={{
-                fontSize: "20px",
-                textAlign: "center",
-                fontWeight: "bold",
-                margin: "10px 10px 5px 0",
-              }}
-            >
-              {translation("changeLanguage")}
-            </Typography>
+      <Box sx={{ display: "flex" }}>
+        <Typography
+          sx={{
+            fontSize: "20px",
+            textAlign: "center",
+            fontWeight: "bold",
+            margin: "10px 10px 5px 0",
+          }}
+        >
+          {translation("changeLanguage")}
+        </Typography>
 
-            <Select
-              labelId="demo-simple-select"
-              id="demo-simple-select"
-              value={language}
-              label="language"
-              onChange={handleChangeLanguage}
-              defaultValue={language}
-              sx={{ width: "125px", height: "50px" }}
-            >
-              <MenuItem value={"russian"}>{translation("russian")}</MenuItem>
-              <MenuItem value={"english"}> {translation("english")}</MenuItem>
-            </Select>
-          </Box>
-          <Box sx={{ display: "flex", margin: "10px 0 0 0" }}>
-            <Typography
-              sx={{
-                fontSize: "20px",
-                textAlign: "center",
-                fontWeight: "bold",
-                margin: "10px 10px 5px 0",
-              }}
-            >
-              {translation("changeTheme")}
-            </Typography>
+        <Select
+          labelId="demo-simple-select"
+          id="demo-simple-select"
+          value={language}
+          label="language"
+          onChange={handleChangeLanguage}
+          defaultValue={language}
+          sx={{ width: "125px", height: "50px" }}
+        >
+          <MenuItem value={"russian"}>{translation("russian")}</MenuItem>
+          <MenuItem value={"english"}> {translation("english")}</MenuItem>
+        </Select>
+      </Box>
+      <Box sx={{ display: "flex", margin: "10px 0 0 0" }}>
+        <Typography
+          sx={{
+            fontSize: "20px",
+            textAlign: "center",
+            fontWeight: "bold",
+            margin: "10px 10px 5px 0",
+          }}
+        >
+          {translation("changeTheme")}
+        </Typography>
 
-            <Select
-              labelId="demo-simple-select"
-              id="demo-simple"
-              value={theme ? theme : "light"}
-              label="theme"
-              onChange={handleChangeTheme}
-              defaultValue={language}
-              sx={{ width: "125px", height: "50px" }}
-            >
-              <MenuItem value={"dark"}>{translation("dark")}</MenuItem>
-              <MenuItem value={"light"}> {translation("light")}</MenuItem>
-            </Select>
-          </Box>
-        </>
-      )}
+        <Select
+          labelId="demo-simple-select"
+          id="demo-simple"
+          value={theme ? theme : "light"}
+          label="theme"
+          onChange={handleChangeTheme}
+          defaultValue={language}
+          sx={{ width: "125px", height: "50px" }}
+        >
+          <MenuItem value={"dark"}>{translation("dark")}</MenuItem>
+          <MenuItem value={"light"}> {translation("light")}</MenuItem>
+        </Select>
+      </Box>
     </>
   );
 };

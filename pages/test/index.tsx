@@ -44,9 +44,11 @@ import { Word, WordsContextType } from "../../Interfaces/ProvidersInterface";
 import { useLogin } from "../../hooks/useLogin";
 import { useTestContext } from "../../hooks/useTestServer";
 import { useStats } from "../../hooks/useStats";
+import { useWords } from "../../hooks/useWords";
 
 const TestPage = () => {
-  const { checkingLogin, getWord, wordsHook } = useLogin();
+  const { checkingLogin } = useLogin();
+  const { getWord, wordsHook } = useWords();
 
   const { addStatsServer, addWordStatsServer, getStats, statsHook } =
     useStats();

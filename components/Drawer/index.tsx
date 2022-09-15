@@ -10,16 +10,12 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import { useEffect, useState } from "react";
 import { paths } from "../../utils/path";
 import makeStyles from "@mui/styles/makeStyles";
-import { useWords } from "../../hooks/useWords";
-import { useNotification } from "../../hooks/useNotification";
-import { NotificationKeys, WordsParams } from "../../services/localKey";
 import { useRouter } from "next/router";
 import Router from "next/router";
 
 import { DrawerBarProps } from "../../Interfaces/DrawerBarInterface";
 import { useLanguage } from "../../hooks/useLanguage";
 import { useTheme } from "../../hooks/useTheme";
-import { useLogin } from "../../hooks/useLogin";
 
 const useStyles = makeStyles(() => ({
   item: {

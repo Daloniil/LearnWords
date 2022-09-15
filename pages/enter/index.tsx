@@ -19,7 +19,6 @@ import {
   titleStyle,
 } from "../../Styles/EnterStyle";
 import {
-  ContextKey,
   LanguageKeys,
   LoginStatus,
   NotificationKeys,
@@ -37,18 +36,19 @@ import { enterTranslation } from "../../translation/Enter";
 import { useLanguage } from "../../hooks/useLanguage";
 import { setTranslation } from "../../utils/setTranslation";
 import { useLogin } from "../../hooks/useLogin";
+import { useWords } from "../../hooks/useWords";
 
 const EnterPage = () => {
   const { addNotification } = useNotification();
   const { languageContext } = useLanguage();
-  const { checkingLogin, addWord } = useLogin();
+  const { checkingLogin } = useLogin();
+  const { addWord } = useWords();
 
   const [translateEnglish, setTranslateEnglish] = useState("");
   const debouncedSearchValue = useDebounce(translateEnglish, 200);
   const [loading, setLoading] = useState(false);
   const [translatedText, setTranslatedText] = useState([] as TranslationData[]);
   const [statusLoading, setStatusLoadingUser] = useState(false);
-  const [openLoading, setOpenLoading] = useState(false);
 
   const schema = yup.object().shape({
     englishWord: yup.string().required("This Field Cannot Be Empty"),
@@ -124,118 +124,101 @@ const EnterPage = () => {
 
   return (
     <>
-      {openLoading ? (
-        <CircularProgress
-          sx={{
-            minWidth: "100px",
-            minHeight: "100px",
-            margin: "50px auto 50px auto",
-          }}
-        />
-      ) : (
-        <>
-          <Box sx={titleStyle}>{translation("enterWord")}</Box>
-          <form
-            onSubmit={handleSubmit((data) => {
-              if (setLongError(data)) {
-                data = lowerText(data);
-                addWords(data);
-              }
-            })}
-            style={{ margin: "0 auto" }}
-          >
-            <Box sx={modalContainerStyle}>
-              <TextField
-                error={!!errors.englishWord}
-                sx={textFieldStyle}
-                label={translation("english")}
-                {...register("englishWord", { required: true })}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                helperText={errors.englishWord?.message}
-                onChange={(e) => {
-                  setLoading(true);
-                  setTranslateEnglish(e.target.value);
-                }}
-              />
+      <Box sx={titleStyle}>{translation("enterWord")}</Box>
+      <form
+        onSubmit={handleSubmit((data) => {
+          if (setLongError(data)) {
+            data = lowerText(data);
+            addWords(data);
+          }
+        })}
+        style={{ margin: "0 auto" }}
+      >
+        <Box sx={modalContainerStyle}>
+          <TextField
+            error={!!errors.englishWord}
+            sx={textFieldStyle}
+            label={translation("english")}
+            {...register("englishWord", { required: true })}
+            InputLabelProps={{
+              shrink: true,
+            }}
+            helperText={errors.englishWord?.message}
+            onChange={(e) => {
+              setLoading(true);
+              setTranslateEnglish(e.target.value);
+            }}
+          />
 
-              <Box>
-                <TextField
-                  error={!!errors.russianWord}
-                  sx={textFieldStyle}
-                  label={translation("russian")}
-                  {...register("russianWord", { required: true })}
-                  InputLabelProps={{
-                    shrink: true,
+          <Box>
+            <TextField
+              error={!!errors.russianWord}
+              sx={textFieldStyle}
+              label={translation("russian")}
+              {...register("russianWord", { required: true })}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              helperText={errors.russianWord?.message}
+            />
+            <Box sx={{ display: "flex" }}>
+              {statusLoading ? (
+                <Box
+                  sx={{
+                    transform: "translate(-50px, 20px)",
                   }}
-                  helperText={errors.russianWord?.message}
-                />
-                <Box sx={{ display: "flex" }}>
-                  {statusLoading ? (
-                    <Box
+                >
+                  <CircularProgress />
+                </Box>
+              ) : (
+                ""
+              )}
+              <Box
+                style={{
+                  margin: statusLoading
+                    ? "-5px 0 5px -25px"
+                    : "-5px 0 5px 15px",
+                  display: translateEnglish ? "" : "none",
+                }}
+              >
+                <Typography sx={{ textAlign: "center" }}>
+                  {translation("translation")}
+                </Typography>
+
+                {loading ? (
+                  <Box sx={loadingStyle}>
+                    <CircularProgress />
+                  </Box>
+                ) : (
+                  <Box
+                    sx={boxTranslationStyle}
+                    onClick={() =>
+                      setValue(
+                        "russianWord",
+                        translatedText[0].translations[0].text
+                      )
+                    }
+                  >
+                    <Typography
                       sx={{
-                        transform: "translate(-50px, 20px)",
+                        margin: "5px",
                       }}
                     >
-                      <CircularProgress />
-                    </Box>
-                  ) : (
-                    ""
-                  )}
-                  <Box
-                    style={{
-                      margin: statusLoading
-                        ? "-5px 0 5px -25px"
-                        : "-5px 0 5px 15px",
-                      display: translateEnglish ? "" : "none",
-                    }}
-                  >
-                    <Typography sx={{ textAlign: "center" }}>
-                      {translation("translation")}
+                      {translatedText[0]
+                        ? capitalize(translatedText[0].translations[0].text)
+                        : ""}
                     </Typography>
-
-                    {loading ? (
-                      <Box sx={loadingStyle}>
-                        <CircularProgress />
-                      </Box>
-                    ) : (
-                      <Box
-                        sx={boxTranslationStyle}
-                        onClick={() =>
-                          setValue(
-                            "russianWord",
-                            translatedText[0].translations[0].text
-                          )
-                        }
-                      >
-                        <Typography
-                          sx={{
-                            margin: "5px",
-                          }}
-                        >
-                          {translatedText[0]
-                            ? capitalize(translatedText[0].translations[0].text)
-                            : ""}
-                        </Typography>
-                      </Box>
-                    )}
                   </Box>
-                </Box>
+                )}
               </Box>
             </Box>
+          </Box>
+        </Box>
 
-            <Button
-              variant="outlined"
-              size="medium"
-              type="submit"
-              sx={addStyle}
-            >
-              {translation("addButton")}
-            </Button>
-          </form>
-        </>
-      )}
+        <Button variant="outlined" size="medium" type="submit" sx={addStyle}>
+          {translation("addButton")}
+        </Button>
+      </form>
     </>
   );
 };

@@ -18,7 +18,7 @@ import { findLongestWord } from "../../utils/longWord";
 import { editWordTranslation } from "../../translation/EditWord";
 import { useLanguage } from "../../hooks/useLanguage";
 import { setTranslation } from "../../utils/setTranslation";
-import { useLogin } from "../../hooks/useLogin";
+import { useWords } from "../../hooks/useWords";
 
 const emptyField = "This Field Cannot Be Empty";
 
@@ -34,7 +34,7 @@ export const EditWord = ({
   setStatusLoadingUser,
 }: WordEditProps) => {
   const { languageContext } = useLanguage();
-  const { updateWord, deleteWord } = useLogin();
+  const { updateWord, deleteWord } = useWords();
 
   const [statusDelete, setStatusDelete] = useState(false);
 

@@ -31,10 +31,6 @@ export enum ColorKeys {
 }
 
 export enum ContextKey {
-  STATS = "app-stats",
-  PERCENT = "app-percent",
-  TEST = "app-test",
-  WORD = "app-word",
   LANGUAGE = "app-language",
   ENGLISH = "app-english",
   RUSSIAN = "app-russian",

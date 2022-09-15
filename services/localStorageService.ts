@@ -14,37 +14,6 @@ export class LocalStorageService {
       return null;
     }
   }
-  public static setWord(value: Word, key: ItemType, session = false) {
-    const storage = session ? sessionStorage : localStorage;
-    const words = LocalStorageService.getItem<Word[]>(key) ?? [];
-
-    value.id = words.length > 0 ? words[words.length - 1].id + 1 : 1;
-    words.push(value);
-    storage.setItem(key, JSON.stringify(words));
-  }
-
-  public static updateWord(value: Word, key: ItemType, session = false) {
-    const storage = session ? sessionStorage : localStorage;
-    const words = LocalStorageService.getItem<Word[]>(key) ?? [];
-    const index = words.map((id) => id.id).indexOf(value.id);
-
-    words[index] = value;
-    storage.setItem(key, JSON.stringify(words));
-  }
-
-  public static deleteWord(id: number, key: ItemType, session = false) {
-    const storage = session ? sessionStorage : localStorage;
-    const words = LocalStorageService.getItem<Word[]>(key) ?? [];
-    const index = words.map((id) => id.id).indexOf(id);
-
-    words.splice(index, 1);
-    storage.setItem(key, JSON.stringify(words));
-  }
-
-  public static setPercentTest(value: number, session = false) {
-    const storage = session ? sessionStorage : localStorage;
-    storage.setItem(ContextKey.PERCENT, JSON.stringify(value));
-  }
 
   public static setLanguage(value: string, session = false) {
     const storage = session ? sessionStorage : localStorage;

@@ -4,7 +4,6 @@ import Layout from "../layouts";
 
 import { NotificationProvider } from "../providers/NotificationProvider";
 import { Notification } from "../components/Notification";
-import { WordsProvider } from "../providers/WordsProvider";
 import { LanguageProvider } from "../providers/LanguageProvider";
 import { ThemeProviderContext } from "../providers/ThemeProvider";
 import { AuthProvider } from "../providers/AuthProvider";
@@ -15,12 +14,10 @@ const MyApp = ({ Component, pageProps }: AppProps) => {
       <LanguageProvider>
         <NotificationProvider>
           <AuthProvider>
-            <WordsProvider>
-              <Layout>
-                <Component {...pageProps} />
-                <Notification />
-              </Layout>
-            </WordsProvider>
+            <Layout>
+              <Component {...pageProps} />
+              <Notification />
+            </Layout>
           </AuthProvider>
         </NotificationProvider>
       </LanguageProvider>

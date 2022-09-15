@@ -7,15 +7,11 @@ import { useEffect, useState } from "react";
 import { Bar } from "../components/Bar";
 import { DrawerBar } from "../components/Drawer";
 import { useLanguage } from "../hooks/useLanguage";
-import { useNotification } from "../hooks/useNotification";
 import { useTheme } from "../hooks/useTheme";
-import { useWords } from "../hooks/useWords";
 import { LayoutProps } from "../Interfaces/LayoutInterface";
-import { Mode, NotificationKeys, WordsParams } from "../services/localKey";
+import { Mode } from "../services/localKey";
 import { paths } from "../utils/path";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { useLogin } from "../hooks/useLogin";
-import { Word } from "../Interfaces/ProvidersInterface";
 
 const Layout = ({ children }: LayoutProps) => {
   const router = useRouter();
