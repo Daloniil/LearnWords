@@ -6,6 +6,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import VolumeUpIcon from "@mui/icons-material/VolumeUp";
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -42,7 +43,7 @@ const EnterPage = () => {
   const { addNotification } = useNotification();
   const { languageContext } = useLanguage();
   const { checkingLogin } = useLogin();
-  const { addWord } = useWords();
+  const { addWord, speakWord } = useWords();
 
   const [translateEnglish, setTranslateEnglish] = useState("");
   const debouncedSearchValue = useDebounce(translateEnglish, 200);
@@ -135,20 +136,28 @@ const EnterPage = () => {
         style={{ margin: "0 auto" }}
       >
         <Box sx={modalContainerStyle}>
-          <TextField
-            error={!!errors.englishWord}
-            sx={textFieldStyle}
-            label={translation("english")}
-            {...register("englishWord", { required: true })}
-            InputLabelProps={{
-              shrink: true,
-            }}
-            helperText={errors.englishWord?.message}
-            onChange={(e) => {
-              setLoading(true);
-              setTranslateEnglish(e.target.value);
-            }}
-          />
+          <Box sx={{ display: "flex", margin: "0 0 0 -35px" }}>
+            <Typography
+              onClick={() => speakWord(translateEnglish)}
+              sx={{ margin: "15px 0 0 0", transform: "translate(-10px, 0)" }}
+            >
+              <VolumeUpIcon fontSize="large" color="primary" />
+            </Typography>
+            <TextField
+              error={!!errors.englishWord}
+              sx={textFieldStyle}
+              label={translation("english")}
+              {...register("englishWord", { required: true })}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              helperText={errors.englishWord?.message}
+              onChange={(e) => {
+                setLoading(true);
+                setTranslateEnglish(e.target.value);
+              }}
+            />
+          </Box>
 
           <Box>
             <TextField

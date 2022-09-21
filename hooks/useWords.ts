@@ -200,11 +200,17 @@ export const useWords = () => {
       }
     }
   };
+
+  const speakWord = (text: string) => {
+    speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+  };
+
   return {
     updateWord,
     deleteWord,
     getWord,
     addWord,
     wordsHook,
+    speakWord,
   };
 };

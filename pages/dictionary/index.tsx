@@ -13,6 +13,8 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import VolumeUpIcon from "@mui/icons-material/VolumeUp";
+
 import SearchIcon from "@mui/icons-material/Search";
 import { useEffect, useState } from "react";
 
@@ -40,7 +42,7 @@ const DictionaryPage = () => {
   const { languageContext } = useLanguage();
   const { themeContext } = useTheme();
   const { checkingLogin } = useLogin();
-  const { getWord, wordsHook } = useWords();
+  const { getWord, wordsHook, speakWord } = useWords();
 
   const [words, setWords] = useState([] as Word[]);
   const [statusDelete, setStatusDelete] = useState(false);
@@ -174,12 +176,31 @@ const DictionaryPage = () => {
                     }}
                     sx={themeContext === "dark" ? rowStyleDark : rowStyle}
                   >
-                    <TableCell>
-                      <Typography sx={wordsStyle}>
-                        {capitalize(item.word)}
+                    <TableCell sx={{ maxWidth: "150px" }}>
+                      <Typography
+                        sx={{
+                          display: "flex",
+                          justifyContent: "center",
+                          margin: "0 0 0 5px",
+                        }}
+                      >
+                        <Typography
+                          onClick={(e) => {
+                            e.stopPropagation(), speakWord(item.word);
+                          }}
+                          sx={{ margin: "3px 0 0 0" }}
+                        >
+                          <VolumeUpIcon fontSize="medium" color="primary" />
+                        </Typography>
+                        <Typography sx={wordsStyle}>
+                          {capitalize(item.word)}
+                        </Typography>
                       </Typography>
                     </TableCell>
-                    <TableCell onClick={handleCloseModal}>
+                    <TableCell
+                      onClick={handleCloseModal}
+                      sx={{ maxWidth: "150px" }}
+                    >
                       <Typography sx={wordsStyle}>
                         {capitalize(item.correctTranslation)}
                       </Typography>
