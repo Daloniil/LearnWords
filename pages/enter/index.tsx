@@ -136,13 +136,23 @@ const EnterPage = () => {
         style={{ margin: "0 auto" }}
       >
         <Box sx={modalContainerStyle}>
-          <Box sx={{ display: "flex", margin: "0 0 0 -35px" }}>
-            <Typography
-              onClick={() => speakWord(translateEnglish)}
-              sx={{ margin: "15px 0 0 0", transform: "translate(-10px, 0)" }}
-            >
-              <VolumeUpIcon fontSize="large" color="primary" />
-            </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              margin: translateEnglish ? "0 0 0 -35px" : "",
+            }}
+          >
+            {translateEnglish ? (
+              <Typography
+                onClick={() => speakWord(translateEnglish)}
+                sx={{ margin: "15px 0 0 0", transform: "translate(-10px, 0)" }}
+              >
+                <VolumeUpIcon fontSize="large" color="primary" />
+              </Typography>
+            ) : (
+              ""
+            )}
+
             <TextField
               error={!!errors.englishWord}
               sx={textFieldStyle}
