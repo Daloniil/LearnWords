@@ -45,7 +45,6 @@ import { useLogin } from "../../hooks/useLogin";
 import { useTestContext } from "../../hooks/useTestServer";
 import { useStats } from "../../hooks/useStats";
 import { useWords } from "../../hooks/useWords";
-import { async } from "@firebase/util";
 
 const TestPage = () => {
   const { checkingLogin } = useLogin();
@@ -331,7 +330,7 @@ const TestPage = () => {
               <Box
                 key={index}
                 onClick={() => {
-                  click ? selectCorrectWord(item) : alert("No Clicked");
+                  click ? selectCorrectWord(item) : "";
                 }}
                 sx={variantStyle}
               >
