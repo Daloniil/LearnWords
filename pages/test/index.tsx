@@ -45,6 +45,7 @@ import { useLogin } from "../../hooks/useLogin";
 import { useTestContext } from "../../hooks/useTestServer";
 import { useStats } from "../../hooks/useStats";
 import { useWords } from "../../hooks/useWords";
+import { async } from "@firebase/util";
 
 const TestPage = () => {
   const { checkingLogin } = useLogin();
@@ -84,6 +85,8 @@ const TestPage = () => {
   const [correctSelectWord, setCorrectSelectWord] = useState("");
   const [errorSelectWord, setErrorSelectWord] = useState("");
   const [openModal, setOpenModal] = useState(false);
+
+  const [click, setClick] = useState(true);
 
   const handleCloseModal = () => {
     setOpenModal(!openModal);
@@ -139,17 +142,22 @@ const TestPage = () => {
   };
 
   const selectCorrectWord = (word: string) => {
+    setClick(false);
     setCorrectSelectWord(testWords[0].correctTranslation);
     if (testWords[0].correctTranslation === word) {
       if (testWords.length === 1) {
         restartTest();
         addStatsServer();
+        setTimeout(() => setClick(true), 1000);
+
         return;
       }
       editWords(true, testWords);
 
       setPercent(percent + 1);
       pointCreate(true);
+      setTimeout(() => setClick(true), 1000);
+
       return;
     }
     addWordStatsServer(testWords[0].word, testWords[0].correctTranslation);
@@ -166,6 +174,8 @@ const TestPage = () => {
     );
     editWords(false, recreate);
     pointCreate(false);
+
+    setTimeout(() => setClick(true), 1000);
 
     return;
   };
@@ -321,7 +331,7 @@ const TestPage = () => {
               <Box
                 key={index}
                 onClick={() => {
-                  selectCorrectWord(item);
+                  click ? selectCorrectWord(item) : alert("No Clicked");
                 }}
                 sx={variantStyle}
               >
