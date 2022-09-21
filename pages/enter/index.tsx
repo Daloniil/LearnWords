@@ -46,10 +46,16 @@ const EnterPage = () => {
   const { addWord, speakWord } = useWords();
 
   const [translateEnglish, setTranslateEnglish] = useState("");
-  const debouncedSearchValue = useDebounce(translateEnglish, 200);
+  const [translateRussian, setTranslateRussian] = useState("");
+
+  const debouncedSearchValueEnglish = useDebounce(translateEnglish, 200);
+  const debouncedSearchValueRussian = useDebounce(translateRussian, 200);
+
   const [loading, setLoading] = useState(false);
   const [translatedText, setTranslatedText] = useState([] as TranslationData[]);
   const [statusLoading, setStatusLoadingUser] = useState(false);
+
+  const [lang, setLang] = useState("en");
 
   const schema = yup.object().shape({
     englishWord: yup.string().required("This Field Cannot Be Empty"),
@@ -96,14 +102,19 @@ const EnterPage = () => {
     setStatusLoadingUser(true);
     await addWord(data);
     setTranslateEnglish("");
+    setTranslateRussian("");
     closeModalAdd();
     setStatusLoadingUser(false);
   };
 
-  const handleTranslate = async (data: Translation[]) => {
-    const request = await TranslationService.translate(data).catch((e) => {
-      addNotification(e.message, NotificationKeys.ERROR), setLoading(false);
-    });
+  const handleTranslate = async (data: Translation[], lang: string) => {
+    setLang(lang);
+    const request = await TranslationService.translate(data, lang).catch(
+      (e) => {
+        addNotification(e.message, NotificationKeys.ERROR), setLoading(false);
+      }
+    );
+
     const result = request?.data as TranslationData[] | undefined;
     setLoading(false);
     if (result) {
@@ -116,8 +127,12 @@ const EnterPage = () => {
   };
 
   useEffect(() => {
-    handleTranslate([{ Text: debouncedSearchValue }]);
-  }, [debouncedSearchValue]);
+    handleTranslate([{ Text: debouncedSearchValueEnglish }], "ru");
+  }, [debouncedSearchValueEnglish]);
+
+  useEffect(() => {
+    handleTranslate([{ Text: debouncedSearchValueRussian }], "en");
+  }, [debouncedSearchValueRussian]);
 
   useEffect(() => {
     checkingLogin(LoginStatus.OTHER);
@@ -179,6 +194,10 @@ const EnterPage = () => {
                 shrink: true,
               }}
               helperText={errors.russianWord?.message}
+              onChange={(e) => {
+                setLoading(true);
+                setTranslateRussian(e.target.value);
+              }}
             />
             <Box sx={{ display: "flex" }}>
               {statusLoading ? (
@@ -197,7 +216,7 @@ const EnterPage = () => {
                   margin: statusLoading
                     ? "-5px 0 5px -25px"
                     : "-5px 0 5px 15px",
-                  display: translateEnglish ? "" : "none",
+                  display: translateEnglish || translateRussian ? "" : "none",
                 }}
               >
                 <Typography sx={{ textAlign: "center" }}>
@@ -211,12 +230,17 @@ const EnterPage = () => {
                 ) : (
                   <Box
                     sx={boxTranslationStyle}
-                    onClick={() =>
-                      setValue(
-                        "russianWord",
-                        translatedText[0].translations[0].text
-                      )
-                    }
+                    onClick={() => {
+                      lang === "ru"
+                        ? setValue(
+                            "russianWord",
+                            translatedText[0].translations[0].text
+                          )
+                        : setValue(
+                            "englishWord",
+                            translatedText[0].translations[0].text
+                          );
+                    }}
                   >
                     <Typography
                       sx={{

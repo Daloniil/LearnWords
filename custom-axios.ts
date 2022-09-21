@@ -1,19 +1,38 @@
 import axios from "axios";
 
-export const axiosInstance = axios.create({
+export const axiosInstanceEn = axios.create({
   baseURL: process.env.API_URL,
 });
 
-axiosInstance.interceptors.request.use(
+export const axiosInstanceRu = axios.create({
+  baseURL: process.env.API_URL,
+});
+
+axiosInstanceRu.interceptors.request.use(
   (config) => {
-    (config.params = params), (config.headers = headers);
+    (config.params = paramsToRu), (config.headers = headers);
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-const params = {
+axiosInstanceEn.interceptors.request.use(
+  (config) => {
+    (config.params = paramsToEn), (config.headers = headers);
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+const paramsToRu = {
   to: "ru",
+  "api-version": "3.0",
+  profanityAction: "NoAction",
+  textType: "plain",
+};
+
+const paramsToEn = {
+  to: "en",
   "api-version": "3.0",
   profanityAction: "NoAction",
   textType: "plain",
