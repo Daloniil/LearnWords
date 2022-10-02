@@ -16,6 +16,16 @@ export const useTest = () => {
     }
     return indices;
   };
+  const findLang = (word: Word, englishWords: Word[]) => {
+    if (
+      englishWords.find(
+        (item) => item.correctTranslation === word.correctTranslation
+      )
+    ) {
+      return word.word;
+    }
+    return word.correctTranslation;
+  };
 
   const findLangWord = (
     correctWord: string,
@@ -138,5 +148,12 @@ export const useTest = () => {
     return testWords;
   };
 
-  return { createVariantsWord, recreateWords, setColor, editPoint, clearPoint };
+  return {
+    createVariantsWord,
+    recreateWords,
+    setColor,
+    editPoint,
+    clearPoint,
+    findLang,
+  };
 };

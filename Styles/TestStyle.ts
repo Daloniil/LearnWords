@@ -1,7 +1,7 @@
 export const titleStyle = {
   fontSize: "20px",
   textAlign: "center",
-  fontWeight: "bold",
+  fontWeight: "800",
   margin: "10px 0 5px 0",
 };
 
@@ -44,11 +44,17 @@ export const variantStyle = {
   border: 2,
   borderColor: "#E0E0E0",
   borderRadius: "5px",
+  position: "relative",
 };
 
 export const variantTestStyle = {
-  padding: "35px 0 0 0",
-  margin: "5px auto 35px auto",
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  marginRight: "-50%",
+  transform: "translate(-50%, -50%)",
+  fontSize: "17px",
+  fontWeight: "450",
   maxWidth: "120px",
   overflowWrap: "break-word",
   wordWrap: " break-word",

@@ -48,7 +48,7 @@ import { useWords } from "../../hooks/useWords";
 
 const TestPage = () => {
   const { checkingLogin } = useLogin();
-  const { getWord, wordsHook } = useWords();
+  const { getWord, wordsHook, speakWord } = useWords();
 
   const { addStatsServer, addWordStatsServer, getStats, statsHook } =
     useStats();
@@ -64,8 +64,14 @@ const TestPage = () => {
     deleteTestServer,
   } = useTestContext();
 
-  const { createVariantsWord, recreateWords, setColor, editPoint, clearPoint } =
-    useTest();
+  const {
+    createVariantsWord,
+    recreateWords,
+    setColor,
+    editPoint,
+    clearPoint,
+    findLang,
+  } = useTest();
 
   const { addNotification } = useNotification();
   const { languageContext } = useLanguage();
@@ -143,10 +149,13 @@ const TestPage = () => {
   const selectCorrectWord = (word: string) => {
     setClick(false);
     setCorrectSelectWord(testWords[0].correctTranslation);
+    const wordToSpeak = findLang(testWords[0], wordsServer.englishWords);
+
     if (testWords[0].correctTranslation === word) {
       if (testWords.length === 1) {
         restartTest();
         addStatsServer();
+        speakWord(wordToSpeak);
         setTimeout(() => setClick(true), 1000);
 
         return;
@@ -155,6 +164,7 @@ const TestPage = () => {
 
       setPercent(percent + 1);
       pointCreate(true);
+      speakWord(wordToSpeak);
       setTimeout(() => setClick(true), 1000);
 
       return;
@@ -173,6 +183,7 @@ const TestPage = () => {
     );
     editWords(false, recreate);
     pointCreate(false);
+    speakWord(wordToSpeak);
 
     setTimeout(() => setClick(true), 1000);
 
