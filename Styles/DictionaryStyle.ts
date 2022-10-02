@@ -1,5 +1,5 @@
 export const wordsStyle = {
-  fontSize: "22px",
+  fontSize: "15px",
   margin: "2px",
   textAlign: "center",
   minWidth: "120px",
