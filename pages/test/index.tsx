@@ -336,6 +336,7 @@ const TestPage = () => {
               >
                 <Typography
                   sx={variantTestStyle}
+                  lang={"ru" || "en"}
                   style={{
                     color: setColor(errorSelectWord, correctSelectWord, item),
                   }}

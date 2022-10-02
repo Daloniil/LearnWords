@@ -1,5 +1,5 @@
 export const titleStyle = {
-  fontSize: "22px",
+  fontSize: "20px",
   textAlign: "center",
   fontWeight: "bold",
   margin: "10px 0 5px 0",
@@ -30,7 +30,7 @@ export const doneFailStyle = {
 };
 
 export const variantsBoxStyle = {
-  maxWidth: "340px",
+  maxWidth: "600px",
   display: "flex",
   flexWrap: "wrap",
   justifyContent: "center",
@@ -38,8 +38,8 @@ export const variantsBoxStyle = {
 };
 
 export const variantStyle = {
-  minWidth: "120px",
-  minHeight: "100px",
+  minWidth: "150px",
+  minHeight: "120px",
   textAlign: "center",
   border: 2,
   borderColor: "#E0E0E0",
@@ -47,9 +47,15 @@ export const variantStyle = {
 };
 
 export const variantTestStyle = {
-  padding: "30px 0 0 0",
-  margin: "5px 0 25px 0",
+  padding: "35px 0 0 0",
+  margin: "5px auto 35px auto",
   maxWidth: "120px",
+  overflowWrap: "break-word",
+  wordWrap: " break-word",
+  msHyphens: "auto",
+  mozHyphens: "auto",
+  webkitHyphens: "auto",
+  hyphens: "auto",
 };
 
 export const loadingStyle = {
