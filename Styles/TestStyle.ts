@@ -64,7 +64,6 @@ export const boxTranslationStyle = {
   borderRadius: "5px",
   textAlign: "center",
   maxWidth: "225px",
-  height: "35px",
   maxHeight: "100%",
 };
 

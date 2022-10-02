@@ -1,8 +1,12 @@
 export const wordsStyle = {
-  fontSize: "18px",
+  fontSize: "15px",
   margin: "2px",
   textAlign: "center",
   minWidth: "120px",
+  msHyphens: "auto",
+  mozHyphens: "auto",
+  webkitHyphens: "auto",
+  hyphens: "auto",
 };
 
 export const titleWordsStyle = {

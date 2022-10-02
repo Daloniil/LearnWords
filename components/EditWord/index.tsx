@@ -60,25 +60,6 @@ export const EditWord = ({
     handleCloseModal();
   };
 
-  const setLongError = (data: Enter) => {
-    let status = true;
-    Object.keys(data).forEach((word) => {
-      const current = word as keyof typeof data;
-      if (findLongestWord(data[current]).length > WordsParams.MAXLENGHT) {
-        const errorKey =
-          word === LanguageKeys.ENGLISH
-            ? LanguageKeys.ENGLISH
-            : LanguageKeys.RUSSIAN;
-        setError(errorKey, {
-          type: "manual",
-          message: `${data[errorKey]} Too Big A Word`,
-        });
-        status = false;
-      }
-    });
-    return status;
-  };
-
   const update = async (data: Enter, id: number) => {
     setStatusLoadingUser(true);
     await updateWord(id, data);
@@ -109,10 +90,8 @@ export const EditWord = ({
       <Typography sx={titleStyle}> {translation("editWord")}</Typography>
       <form
         onSubmit={handleSubmit((data) => {
-          if (setLongError(data)) {
-            data = lowerText(data);
-            editWord(data);
-          }
+          data = lowerText(data);
+          editWord(data);
         })}
       >
         <Box sx={modalContainerStyle}>

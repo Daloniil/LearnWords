@@ -18,6 +18,7 @@ import {
   modalContainerStyle,
   textFieldStyle,
   titleStyle,
+  translateWord,
 } from "../../Styles/EnterStyle";
 import {
   LanguageKeys,
@@ -78,26 +79,6 @@ const EnterPage = () => {
     });
   };
 
-  const setLongError = (data: Enter) => {
-    let status = true;
-
-    Object.keys(data).forEach((word) => {
-      const current = word as keyof typeof data;
-      if (findLongestWord(data[current]).length > WordsParams.MAXLENGHT) {
-        const errorKey =
-          word === LanguageKeys.ENGLISH
-            ? LanguageKeys.ENGLISH
-            : LanguageKeys.RUSSIAN;
-        setError(errorKey, {
-          type: "manual",
-          message: `${data[errorKey]} Too Big A Word`,
-        });
-        status = false;
-      }
-    });
-    return status;
-  };
-
   const addWords = async (data: Enter) => {
     setStatusLoadingUser(true);
     await addWord(data);
@@ -143,10 +124,8 @@ const EnterPage = () => {
       <Box sx={titleStyle}>{translation("enterWord")}</Box>
       <form
         onSubmit={handleSubmit((data) => {
-          if (setLongError(data)) {
-            data = lowerText(data);
-            addWords(data);
-          }
+          data = lowerText(data);
+          addWords(data);
         })}
         style={{ margin: "0 auto" }}
       >
@@ -199,61 +178,66 @@ const EnterPage = () => {
                 setTranslateRussian(e.target.value);
               }}
             />
-            <Box sx={{ display: "flex" }}>
-              {statusLoading ? (
-                <Box
-                  sx={{
-                    transform: "translate(-50px, 20px)",
-                  }}
-                >
+          </Box>
+        </Box>
+
+        <Box sx={{ display: "block", margin: "0 0 5px 0" }}>
+          <Box sx={{ display: "flex", justifyContent: "center" }}>
+            {statusLoading ? (
+              <Box
+                sx={{
+                  transform: "translate(-50px, 20px)",
+                }}
+              >
+                <CircularProgress />
+              </Box>
+            ) : (
+              ""
+            )}
+            <Box
+              style={{
+                margin: statusLoading ? "-5px 0 5px -25px" : "-5px 0 5px 15px",
+                display: translateEnglish || translateRussian ? "" : "none",
+              }}
+            >
+              <Typography sx={{ textAlign: "center" }}>
+                {translation("translation")}
+              </Typography>
+
+              {loading ? (
+                <Box sx={loadingStyle}>
                   <CircularProgress />
                 </Box>
               ) : (
-                ""
-              )}
-              <Box
-                style={{
-                  margin: statusLoading
-                    ? "-5px 0 5px -25px"
-                    : "-5px 0 5px 15px",
-                  display: translateEnglish || translateRussian ? "" : "none",
-                }}
-              >
-                <Typography sx={{ textAlign: "center" }}>
-                  {translation("translation")}
-                </Typography>
-
-                {loading ? (
-                  <Box sx={loadingStyle}>
-                    <CircularProgress />
-                  </Box>
-                ) : (
-                  <Box
-                    sx={boxTranslationStyle}
-                    onClick={() => {
-                      lang === "ru"
-                        ? setValue(
-                            "russianWord",
-                            translatedText[0].translations[0].text
-                          )
-                        : setValue(
-                            "englishWord",
-                            translatedText[0].translations[0].text
-                          );
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        margin: "5px",
-                      }}
-                    >
+                <Box
+                  sx={boxTranslationStyle}
+                  onClick={() => {
+                    lang === "ru"
+                      ? setValue(
+                          "russianWord",
+                          translatedText[0].translations[0].text
+                        )
+                      : setValue(
+                          "englishWord",
+                          translatedText[0].translations[0].text
+                        );
+                  }}
+                >
+                  {lang === "ru" ? (
+                    <Typography lang="ru" sx={translateWord}>
                       {translatedText[0]
                         ? capitalize(translatedText[0].translations[0].text)
                         : ""}
                     </Typography>
-                  </Box>
-                )}
-              </Box>
+                  ) : (
+                    <Typography lang="en" sx={translateWord}>
+                      {translatedText[0]
+                        ? capitalize(translatedText[0].translations[0].text)
+                        : ""}
+                    </Typography>
+                  )}
+                </Box>
+              )}
             </Box>
           </Box>
         </Box>

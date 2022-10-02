@@ -23,3 +23,12 @@ export const addStyle = {
   margin: "0 10px 0 0",
   float: "right",
 };
+
+export const translateWord = {
+  msHyphens: "auto",
+  mozHyphens: "auto",
+  webkitHyphens: "auto",
+  hyphens: "auto",
+  textAlign: "center",
+  // margin: "5px",
+};

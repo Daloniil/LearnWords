@@ -192,7 +192,7 @@ const DictionaryPage = () => {
                         >
                           <VolumeUpIcon fontSize="medium" color="primary" />
                         </Typography>
-                        <Typography sx={wordsStyle}>
+                        <Typography lang="en-US" sx={wordsStyle}>
                           {capitalize(item.word)}
                         </Typography>
                       </Typography>
@@ -201,7 +201,7 @@ const DictionaryPage = () => {
                       onClick={handleCloseModal}
                       sx={{ maxWidth: "150px" }}
                     >
-                      <Typography sx={wordsStyle}>
+                      <Typography lang="ru" sx={wordsStyle}>
                         {capitalize(item.correctTranslation)}
                       </Typography>
                     </TableCell>
