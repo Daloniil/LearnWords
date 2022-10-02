@@ -1,8 +1,10 @@
 export const wordsStyle = {
-  fontSize: "15px",
+  fontSize: "22px",
   margin: "2px",
   textAlign: "center",
   minWidth: "120px",
+  overflowWrap: "break-word",
+  wordWrap: " break-word",
   msHyphens: "auto",
   mozHyphens: "auto",
   webkitHyphens: "auto",

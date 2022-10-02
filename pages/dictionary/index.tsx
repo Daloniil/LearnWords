@@ -192,7 +192,7 @@ const DictionaryPage = () => {
                         >
                           <VolumeUpIcon fontSize="medium" color="primary" />
                         </Typography>
-                        <Typography lang="en-US" sx={wordsStyle}>
+                        <Typography lang="en" sx={wordsStyle}>
                           {capitalize(item.word)}
                         </Typography>
                       </Typography>

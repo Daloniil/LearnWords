@@ -181,7 +181,7 @@ const EnterPage = () => {
           </Box>
         </Box>
 
-        <Box sx={{ display: "block", margin: "0 0 5px 0" }}>
+        <Box sx={{ display: "block", margin: "0 0 5px -15px" }}>
           <Box sx={{ display: "flex", justifyContent: "center" }}>
             {statusLoading ? (
               <Box
@@ -224,7 +224,7 @@ const EnterPage = () => {
                   }}
                 >
                   {lang === "ru" ? (
-                    <Typography lang="ru" sx={translateWord}>
+                    <Typography lang={lang} sx={translateWord}>
                       {translatedText[0]
                         ? capitalize(translatedText[0].translations[0].text)
                         : ""}

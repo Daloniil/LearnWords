@@ -25,10 +25,13 @@ export const addStyle = {
 };
 
 export const translateWord = {
+  fontSize: "16px",
+  overflowWrap: "break-word",
+  wordWrap: " break-word",
   msHyphens: "auto",
   mozHyphens: "auto",
   webkitHyphens: "auto",
   hyphens: "auto",
   textAlign: "center",
-  // margin: "5px",
+  margin: "5px",
 };
