@@ -70,7 +70,7 @@ const Stat = () => {
           </Typography>
           <Box sx={statBoxStyle}>
             {stat.map((word, index) => (
-              <Typography key={index} sx={indentsBoxStyle}>
+              <Typography key={index} sx={indentsBoxStyle} lang="ru">
                 {index + 1}. {capitalize(word.word)} {""} - {""}
                 {capitalize(word.translation)}
               </Typography>

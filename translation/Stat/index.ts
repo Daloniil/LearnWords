@@ -1,7 +1,7 @@
 export const statTranslation = [
   {
     title: "titleStat",
-    ru: "Ваши ошибки в тесте",
-    en: "Errors in test",
+    ru: "Ваши Ошибки В Тесте",
+    en: "Errors In Test",
   },
 ];

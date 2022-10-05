@@ -11,7 +11,7 @@ export const editWordTranslation = [
   },
   {
     title: "editWord",
-    ru: "Редактировать слово",
+    ru: "Редактировать Слово",
     en: "Edit Word",
   },
   {

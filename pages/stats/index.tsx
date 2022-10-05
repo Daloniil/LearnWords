@@ -1,4 +1,5 @@
 import { useStats } from "../../hooks/useStats";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import Router from "next/router";
 import { Box, capitalize, CircularProgress, Typography } from "@mui/material";
 import { useLanguage } from "../../hooks/useLanguage";
@@ -7,6 +8,7 @@ import { setTranslation } from "../../utils/setTranslation";
 
 import {
   deleteButtonStyle,
+  elemStats,
   indentsBoxStyle,
   scrollStatsStyle,
   statsBoxStyle,
@@ -61,17 +63,17 @@ const StatsPage = () => {
                 onClick={() => deleteStats(stat.id)}
                 color={"error"}
               >
-                X
+                <DeleteForeverIcon />
               </Typography>
               <Box
                 sx={indentsBoxStyle}
                 onClick={() => Router.push(`/stats/${stat.id}`)}
               >
                 <Typography sx={titleTestStyle}>
-                  {translation("test")} {stat.id + 1}
+                  {translation("test")} №{stat.id + 1}
                 </Typography>
 
-                <Typography>
+                <Typography sx={elemStats} lang="ru">
                   {stat.stat[0]
                     ? `     1. ${capitalize(stat.stat[0].word)}
                 - 
@@ -80,7 +82,7 @@ const StatsPage = () => {
                 </Typography>
 
                 {stat.stat[1] ? (
-                  <Typography>
+                  <Typography sx={elemStats} lang="ru">
                     2. {capitalize(stat.stat[1].word)}
                     {""} - {""}
                     {capitalize(stat.stat[1].translation)}

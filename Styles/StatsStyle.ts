@@ -5,7 +5,7 @@ export const statsTitleStyle = {
 };
 
 export const statsBoxStyle = {
-  width: "80%",
+  width: "100%",
   margin: "5px auto 5px auto",
   border: 2,
   borderColor: "#E0E0E0",
@@ -22,13 +22,25 @@ export const scrollStatsStyle = {
 export const indentsBoxStyle = {
   padding: "0 0 0 10px",
   margin: "5px 0 5px 0",
+  fontWeight: "450",
+  fontSize: "17px",
   cursor: "pointer",
+  overflowWrap: "break-word",
+  wordWrap: " break-word",
+  msHyphens: "auto",
+  mozHyphens: "auto",
+  webkitHyphens: "auto",
+  hyphens: "auto",
 };
 
-export const titleTestStyle = { fontSize: "18px", fontWeight: "450" };
+export const titleTestStyle = {
+  fontSize: "20px",
+  fontWeight: "600",
+  margin: "0 0 5px 0",
+};
 
 export const statBoxStyle = {
-  width: "80%",
+  width: "100%",
   maxHeight: "600px",
   overflow: "hidden",
   overflowY: "scroll",
@@ -40,7 +52,19 @@ export const statBoxStyle = {
 };
 
 export const deleteButtonStyle = {
-  margin: "0 10px 0 0",
+  margin: "5px 5px 0 0",
   float: "right",
   cursor: "pointer",
+};
+
+export const elemStats = {
+  fontWeight: "450",
+  fontSize: "17px",
+  margin: "0 5px 5px 0",
+  overflowWrap: "break-word",
+  wordWrap: " break-word",
+  msHyphens: "auto",
+  mozHyphens: "auto",
+  webkitHyphens: "auto",
+  hyphens: "auto",
 };

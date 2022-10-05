@@ -11,8 +11,8 @@ export const enterTranslation = [
   },
   {
     title: "enterWord",
-    ru: "Введите слово которое хотите выучить",
-    en: "Enter the word you want to learn",
+    ru: "Введите Слово Которое Хотите Выучить",
+    en: "Enter The Word You Want To Learn",
   },
   {
     title: "translation",
