@@ -14,4 +14,20 @@ export const dictionaryTranslation = [
     ru: "Поиск слова",
     en: "Search word",
   },
+  {
+    title: "cancel",
+    ru: "Отменить",
+    en: "Cancel",
+  },
+  {
+    title: "add",
+    ru: "Добавить",
+    en: "Add",
+  },
+
+  {
+    title: "select",
+    ru: "Выбрать",
+    en: "Select",
+  },
 ];

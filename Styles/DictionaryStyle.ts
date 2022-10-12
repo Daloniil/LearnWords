@@ -47,3 +47,20 @@ export const modalStyle = {
   boxShadow: "24",
   borderRadius: "5%",
 };
+
+export const tableCellStyle = {
+  display: "flex",
+  justifyContent: "center",
+  margin: "0 0 0 5px",
+};
+
+export const circularProgressDictionary = {
+  minWidth: "100px",
+  minHeight: "100px",
+  margin: "25px 0 25px 90%",
+};
+
+export const buttonSelect = {
+  fontSize: "14px",
+  margin: "0 0 0 5px",
+};
