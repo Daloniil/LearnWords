@@ -29,4 +29,9 @@ export const notificationTranslation = [
     ru: "Слово успешно изменено",
     en: "Word edited successfully",
   },
+  {
+    title: "addFolder",
+    ru: "Папка успешно создана",
+    en: "Folder Success Create",
+  },
 ];

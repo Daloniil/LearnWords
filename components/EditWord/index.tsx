@@ -4,7 +4,6 @@ import { Box, Button, capitalize, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
-import { LanguageKeys, WordsParams } from "../../services/localKey";
 import {
   buttonStyle,
   modalContainerStyle,
@@ -14,7 +13,6 @@ import {
 import { WordEditProps } from "../../Interfaces/EditWordInterface";
 import { Enter } from "../../Interfaces/EnterInterface";
 import { lowerText } from "../../utils/lowerText";
-import { findLongestWord } from "../../utils/longWord";
 import { editWordTranslation } from "../../translation/EditWord";
 import { useLanguage } from "../../hooks/useLanguage";
 import { setTranslation } from "../../utils/setTranslation";
@@ -42,7 +40,6 @@ export const EditWord = ({
     register,
     handleSubmit,
     reset,
-    setError,
     formState: { errors },
   } = useForm<Enter>({
     defaultValues: {
