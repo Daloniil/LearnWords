@@ -34,4 +34,9 @@ export const notificationTranslation = [
     ru: "Папка успешно создана",
     en: "Folder Success Create",
   },
+  {
+    title: "selectWords",
+    ru: "Вы должны выбрать слово",
+    en: "You must select word",
+  },
 ];

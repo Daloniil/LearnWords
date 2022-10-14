@@ -2,10 +2,14 @@ import { doc, getDoc, getFirestore, setDoc } from "firebase/firestore";
 import { useAuth } from "./useAuth";
 import Router from "next/router";
 import { useState } from "react";
-import { FoldersType } from "../Interfaces/ProvidersInterface";
+import { FoldersType, Word } from "../Interfaces/ProvidersInterface";
+import { Enter } from "../Interfaces/EnterInterface";
+import { ContextKey, NotificationKeys } from "../services/localKey";
+import { useNotification } from "./useNotification";
 
 export const useFolders = () => {
   const { authContext } = useAuth();
+  const { addNotification } = useNotification();
 
   const [foldersHook, setFoldersHook] = useState([] as FoldersType[]);
 
@@ -76,5 +80,145 @@ export const useFolders = () => {
     }
   };
 
-  return { createFolder, getFolders, deleteFolder, foldersHook };
+  const addWords = async (data: Word[], id: number) => {
+    if (authContext.user) {
+      const db = getFirestore();
+      const docRef = doc(db, "folders", authContext.user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const folder = docSnap.data();
+        let arr = folder.folders.find((idFol: any) => idFol.id === id);
+
+        const wordsEnglish = arr.englishWords as Word[];
+        const wordsRussian = arr.russianWords as Word[];
+
+        data.forEach((word) => {
+          const newEnglishWord = {
+            id: word.id,
+            word: word.word,
+            correctTranslation: word.correctTranslation,
+            point: word.point,
+          };
+          const newRussianWord = {
+            id: word.id,
+            word: word.correctTranslation,
+            correctTranslation: word.word,
+            point: word.point,
+          };
+          wordsEnglish.push(newEnglishWord);
+          wordsRussian.push(newRussianWord);
+        });
+
+        addNotification("wordAdd", NotificationKeys.SUCCESS);
+        setDoc(docRef, folder);
+        return;
+      }
+    }
+  };
+
+  const deleteWords = async (idFolder: number, idWord: number) => {
+    if (authContext.user) {
+      const db = getFirestore();
+      const docRef = doc(db, "folders", authContext.user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const folder = docSnap.data();
+        let arr = folder.folders.find((idFol: any) => idFol.id === idFolder);
+
+        const wordsEnglish = arr.englishWords as Word[];
+        const wordsRussian = arr.russianWords as Word[];
+
+        const indexEnglish = wordsEnglish
+          .map((id: Word) => id.id)
+          .indexOf(idWord);
+
+        wordsEnglish.splice(indexEnglish, 1);
+
+        const indexRussian = wordsRussian
+          .map((id: Word) => id.id)
+          .indexOf(idWord);
+
+        wordsRussian.splice(indexRussian, 1);
+
+        setDoc(docRef, folder);
+        addNotification("wordDelete", NotificationKeys.SUCCESS);
+      }
+    }
+  };
+
+  const updateWords = async (idFolder: number, idWord: number, data: Enter) => {
+    const newEnglishWord = {
+      id: idWord,
+      word: data.englishWord,
+      correctTranslation: data.russianWord,
+      point: 0,
+    };
+    const newRussianWord = {
+      id: idWord,
+      word: data.russianWord,
+      correctTranslation: data.englishWord,
+      point: 0,
+    };
+
+    if (authContext.user) {
+      const db = getFirestore();
+      const docRef = doc(db, "folders", authContext.user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const folder = docSnap.data();
+        let arr = folder.folders.find((idFol: any) => idFol.id === idFolder);
+
+        const wordsEnglish = arr.englishWords as Word[];
+        const wordsRussian = arr.russianWords as Word[];
+
+        const keys = [ContextKey.ENGLISH, ContextKey.RUSSIAN];
+        const repeatingWord = [] as string[];
+
+        const findWords = (data: Enter, key: string) => {
+          if (key === ContextKey.ENGLISH) {
+            return wordsEnglish.find((item) => item.word === data.englishWord);
+          }
+          return wordsRussian.find((item) => item.word === data.russianWord);
+        };
+
+        keys.forEach((lang) => {
+          if (findWords(data, lang)) {
+            repeatingWord.push(lang);
+          }
+        });
+
+        if (repeatingWord.length > 1) {
+          addNotification("hasAlready", NotificationKeys.ERROR);
+          return;
+        } else {
+          const indexEnglish = wordsEnglish
+            .map((id: Word) => id.id)
+            .indexOf(newEnglishWord.id);
+          wordsEnglish[indexEnglish] = newEnglishWord;
+
+          const indexRussian = wordsRussian
+            .map((id: Word) => id.id)
+            .indexOf(newRussianWord.id);
+          wordsRussian[indexRussian] = newRussianWord;
+
+          setDoc(docRef, folder);
+          addNotification("wordEdit", NotificationKeys.SUCCESS);
+          return;
+        }
+      }
+    }
+  };
+
+  return {
+    createFolder,
+    getFolders,
+    deleteFolder,
+    foldersHook,
+    addWords,
+    deleteWords,
+    updateWords,
+  };
 };

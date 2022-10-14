@@ -31,8 +31,8 @@ export type Word = {
 export type FoldersType = {
   id: number;
   name: string;
-  englishWords: Word;
-  russianWords: Word;
+  englishWords: Word[];
+  russianWords: Word[];
 };
 
 export type NotificationContextType = {

@@ -1,12 +1,16 @@
 import { Box, Modal, Typography } from "@mui/material";
+import Router from "next/router";
 import { useEffect, useState } from "react";
 import { AddFolders } from "../../components/AddFolders";
 import { useFolders } from "../../hooks/useFolders";
+import { useLogin } from "../../hooks/useLogin";
 import { useTheme } from "../../hooks/useTheme";
+import { LoginStatus } from "../../services/localKey";
 import { modalStyle } from "../../Styles/DictionaryStyle";
 
 const FoldersPage = () => {
   const { getFolders, deleteFolder, foldersHook } = useFolders();
+  const { checkingLogin } = useLogin();
   const { themeContext } = useTheme();
 
   const [openModal, setOpenModal] = useState(false);
@@ -16,9 +20,8 @@ const FoldersPage = () => {
     getFolders();
   };
 
-  console.log(foldersHook);
-
   useEffect(() => {
+    checkingLogin(LoginStatus.OTHER);
     getFolders();
   }, []);
   return (
@@ -42,7 +45,10 @@ const FoldersPage = () => {
       <div onClick={() => handleCloseModal()}>Add</div>
       <Box>
         {foldersHook.map((item, index) => (
-          <Box sx={{ display: "flex" }}>
+          <Box
+            sx={{ display: "flex" }}
+            onClick={() => Router.push(`/folders/${item.id}`)}
+          >
             <Typography>{item.name}</Typography>
             <Typography onClick={() => deleteFolder(item.id)}>
               Delete

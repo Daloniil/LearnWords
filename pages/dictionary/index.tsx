@@ -37,10 +37,12 @@ import { useLanguage } from "../../hooks/useLanguage";
 import { dictionaryTranslation } from "../../translation/Dictionary";
 import { setTranslation } from "../../utils/setTranslation";
 import { useTheme } from "../../hooks/useTheme";
-import { LoginStatus } from "../../services/localKey";
+import { LoginStatus, NotificationKeys } from "../../services/localKey";
 import { useLogin } from "../../hooks/useLogin";
 import { useWords } from "../../hooks/useWords";
 import { SelectButton } from "../../components/SelectButton";
+import { AddWordsFolder } from "../../components/AddWordsFolder";
+import { useNotification } from "../../hooks/useNotification";
 
 const DictionaryPage = () => {
   const { search } = useSearch();
@@ -48,6 +50,7 @@ const DictionaryPage = () => {
   const { themeContext } = useTheme();
   const { checkingLogin } = useLogin();
   const { getWord, wordsHook, speakWord } = useWords();
+  const { addNotification } = useNotification();
 
   const [words, setWords] = useState([] as Word[]);
   const [statusDelete, setStatusDelete] = useState(false);
@@ -55,17 +58,27 @@ const DictionaryPage = () => {
   const [searchWord, setSearchWord] = useState("");
 
   const [editId, setEditId] = useState(0);
-  const [openModal, setOpenModal] = useState(false);
+  const [openModalEdit, setOpenModalEdit] = useState(false);
+  const [openModalFolder, setOpenModalFolder] = useState(false);
   const [statusLoading, setStatusLoadingUser] = useState(false);
-  const [windowHeight, setWindowHeight] = useState(550);
 
+  const [windowHeight, setWindowHeight] = useState(550);
   const [selectStatus, setSelectStatus] = useState(false);
   const [selectStatusComp, setSelectStatusComp] = useState([] as boolean[]);
   const [moveWord, setMoveWord] = useState([] as Word[]);
 
-  const handleCloseModal = () => {
-    setOpenModal(!openModal);
+  const handleCloseModalEdit = () => {
+    setOpenModalEdit(!openModalEdit);
     getWord();
+  };
+
+  const handleCloseModalFolder = () => {
+    if (moveWord.length) {
+      setOpenModalFolder(!openModalFolder);
+      openModalFolder ? setSelectStatus(!selectStatus) : "";
+    } else {
+      addNotification("selectWords", NotificationKeys.ERROR);
+    }
   };
 
   const textFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,7 +91,7 @@ const DictionaryPage = () => {
   };
 
   const setWordModal = (word: Word) => {
-    handleCloseModal();
+    handleCloseModalEdit();
     setEditWord(word);
     setEditId(word.id);
   };
@@ -141,13 +154,12 @@ const DictionaryPage = () => {
   useEffect(() => {
     emptyStatus();
   }, [words]);
-  console.log(moveWord);
 
   return (
     <>
       <Modal
-        open={openModal}
-        onClose={handleCloseModal}
+        open={openModalEdit}
+        onClose={handleCloseModalEdit}
         aria-labelledby="simple-modal-title"
         aria-describedby="simple-modal-description"
       >
@@ -160,8 +172,27 @@ const DictionaryPage = () => {
           <EditWord
             editId={editId}
             wordEdit={editWord}
-            handleCloseModal={handleCloseModal}
+            handleCloseModal={handleCloseModalEdit}
             setStatusLoadingUser={setStatusLoadingUser}
+          />
+        </Box>
+      </Modal>
+
+      <Modal
+        open={openModalFolder}
+        onClose={handleCloseModalFolder}
+        aria-labelledby="simple-modal-title"
+        aria-describedby="simple-modal-description"
+      >
+        <Box
+          sx={modalStyle}
+          style={{
+            backgroundColor: themeContext === "dark" ? "#232323" : "white",
+          }}
+        >
+          <AddWordsFolder
+            handleCloseModal={handleCloseModalFolder}
+            moveWord={moveWord}
           />
         </Box>
       </Modal>
@@ -186,7 +217,7 @@ const DictionaryPage = () => {
             </Button>
             <Button
               sx={{ fontSize: "14px" }}
-              onClick={() => setSelectStatus(!selectStatus)}
+              onClick={() => handleCloseModalFolder()}
             >
               {translation("add")}
             </Button>
@@ -258,7 +289,7 @@ const DictionaryPage = () => {
                       </Typography>
                     </TableCell>
                     <TableCell
-                      onClick={handleCloseModal}
+                      onClick={handleCloseModalEdit}
                       sx={{ maxWidth: "150px" }}
                     >
                       <Typography lang="ru" sx={wordsStyle}>
