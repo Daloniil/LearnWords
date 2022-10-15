@@ -38,6 +38,7 @@ import { useTheme } from "../../hooks/useTheme";
 import { useWords } from "../../hooks/useWords";
 import { useSearch } from "../../hooks/useSearch";
 import { EditWord } from "../../components/EditWord";
+import { titleFolder } from "../../Styles/FoldersStyle";
 
 const FolderPage = () => {
   const router = useRouter();
@@ -141,16 +142,7 @@ const FolderPage = () => {
         </Box>
       </Modal>
 
-      <Typography
-        sx={{
-          textAlign: "center",
-          fontSize: "20px",
-          fontWeight: "800",
-          margin: "0 0 10px 0 ",
-        }}
-      >
-        {folderName}
-      </Typography>
+      <Typography sx={titleFolder}>{folderName}</Typography>
       <TextField
         hiddenLabel
         id="filled-hidden-label-small"

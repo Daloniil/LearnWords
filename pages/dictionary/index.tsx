@@ -41,7 +41,7 @@ import { LoginStatus, NotificationKeys } from "../../services/localKey";
 import { useLogin } from "../../hooks/useLogin";
 import { useWords } from "../../hooks/useWords";
 import { SelectButton } from "../../components/SelectButton";
-import { AddWordsFolder } from "../../components/AddWordsFolder";
+import { AddToFolder } from "../../components/AddToFolder";
 import { useNotification } from "../../hooks/useNotification";
 
 const DictionaryPage = () => {
@@ -190,7 +190,7 @@ const DictionaryPage = () => {
             backgroundColor: themeContext === "dark" ? "#232323" : "white",
           }}
         >
-          <AddWordsFolder
+          <AddToFolder
             handleCloseModal={handleCloseModalFolder}
             moveWord={moveWord}
           />

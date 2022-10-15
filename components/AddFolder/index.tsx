@@ -11,6 +11,9 @@ import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import { useNotification } from "../../hooks/useNotification";
 import { NotificationKeys } from "../../services/localKey";
+import { folderTranslation } from "../../translation/Folder";
+import { useLanguage } from "../../hooks/useLanguage";
+import { setTranslation } from "../../utils/setTranslation";
 
 const emptyField = "This Field Cannot Be Empty";
 
@@ -18,13 +21,14 @@ const schema = yup.object().shape({
   nameFolder: yup.string().required(emptyField),
 });
 
-export const AddFolders = ({
+export const AddFolder = ({
   handleCloseModal,
 }: {
   handleCloseModal: () => void;
 }) => {
   const { createFolder } = useFolders();
   const { addNotification } = useNotification();
+  const { languageContext } = useLanguage();
 
   const {
     register,
@@ -48,6 +52,10 @@ export const AddFolders = ({
     }, 500);
   };
 
+  const translation = (key: string) => {
+    return setTranslation(key, folderTranslation, languageContext);
+  };
+
   const addFolder = (nameFolder: string) => {
     createFolder(nameFolder);
     updateModal();
@@ -55,7 +63,7 @@ export const AddFolders = ({
 
   return (
     <>
-      <Typography sx={titleStyle}>Add Folder</Typography>
+      <Typography sx={titleStyle}>{translation("addFolder")}</Typography>
       <form
         onSubmit={handleSubmit((data) => {
           addFolder(data.nameFolder);
@@ -74,7 +82,7 @@ export const AddFolders = ({
           />
         </Box>
         <Button variant="outlined" size="medium" sx={buttonStyle} type="submit">
-          Add
+          {translation("add")}
         </Button>
       </form>
     </>
