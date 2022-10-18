@@ -250,10 +250,10 @@ const TestPage = () => {
   }, [allWordsHook]);
 
   useEffect(() => {
+    setStatusLoading(true);
     getWord();
     getStats();
     checkingLogin(LoginStatus.OTHER);
-    setStatusLoading(true);
     getPercentServer();
     getTest();
   }, []);
