@@ -29,4 +29,19 @@ export const notificationTranslation = [
     ru: "Слово успешно изменено",
     en: "Word edited successfully",
   },
+  {
+    title: "addFolder",
+    ru: "Папка успешно создана",
+    en: "Folder Success Create",
+  },
+  {
+    title: "selectWords",
+    ru: "Вы должны выбрать слово",
+    en: "You must select word",
+  },
+  {
+    title: "sameFolder",
+    ru: "Папка с таким названием уже существует",
+    en: "A folder with the same name already exists",
+  },
 ];

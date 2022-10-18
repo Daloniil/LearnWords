@@ -18,6 +18,7 @@ import {
 } from "@mui/material";
 import {
   barStyle,
+  circularProgress,
   doneCorrectStyle,
   doneFailStyle,
   percentBarStyle,
@@ -45,6 +46,7 @@ import { useLogin } from "../../hooks/useLogin";
 import { useTestContext } from "../../hooks/useTestServer";
 import { useStats } from "../../hooks/useStats";
 import { useWords } from "../../hooks/useWords";
+import { SelectFolder } from "../../components/SelectFolder";
 
 const TestPage = () => {
   const { checkingLogin } = useLogin();
@@ -62,6 +64,7 @@ const TestPage = () => {
     getPercentServer,
     percentHook,
     deleteTestServer,
+    selectFolderStatus,
   } = useTestContext();
 
   const {
@@ -92,9 +95,17 @@ const TestPage = () => {
   const [openModal, setOpenModal] = useState(false);
 
   const [click, setClick] = useState(true);
+  const [openModalFolder, setOpenModalFolder] = useState(false);
+  const [folderId, setFolderId] = useState(null as null | number);
 
   const handleCloseModal = () => {
     setOpenModal(!openModal);
+  };
+
+  const handleCloseModalFolder = (id: number) => {
+    setFolderId(id);
+    setOpenModalFolder(!openModalFolder);
+    getTest(id);
   };
 
   const clearSelectWord = () => {
@@ -221,11 +232,20 @@ const TestPage = () => {
     }
 
     if (testWords.length) {
-      setTestWordsServer(testWords);
+      //@ts-ignore
+      setTestWordsServer(testWords, folderId);
     }
   }, [testWords]);
 
   useEffect(() => {
+    if (
+      allWordsHook.englishWords &&
+      allWordsHook.englishWords.length <= WordsParams.MINLENGTH
+    ) {
+      addNotification("leastFive", NotificationKeys.ERROR);
+      Router.push("/enter");
+      return;
+    }
     setWordsServer(allWordsHook);
   }, [allWordsHook]);
 
@@ -283,11 +303,10 @@ const TestPage = () => {
   }, [wordsHook]);
 
   useEffect(() => {
-    if (words?.length && wordsHook.length <= WordsParams.MINLENGTH) {
-      addNotification("leastFive", NotificationKeys.ERROR);
-      Router.push("/enter");
+    if (selectFolderStatus) {
+      setOpenModalFolder(true);
     }
-  }, [words]);
+  }, [selectFolderStatus]);
 
   return (
     <>
@@ -304,14 +323,19 @@ const TestPage = () => {
           />
         </Box>
       </Modal>
+
+      <Modal
+        open={openModalFolder}
+        aria-labelledby="simple-modal-title"
+        aria-describedby="simple-modal-description"
+      >
+        <Box sx={modalStyle}>
+          <SelectFolder handleCloseModal={handleCloseModalFolder} />
+        </Box>
+      </Modal>
+
       {statusLoading ? (
-        <CircularProgress
-          sx={{
-            minWidth: "100px",
-            minHeight: "100px",
-            margin: "25px auto 25px auto",
-          }}
-        />
+        <CircularProgress sx={circularProgress} />
       ) : (
         <>
           <Button

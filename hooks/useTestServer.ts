@@ -13,36 +13,54 @@ export const useTestContext = () => {
   const [allWordsHook, setAllWordsHook] = useState({} as WordsContextType);
   const [testWordHook, setTestWordHook] = useState([] as Word[]);
   const [percentHook, setPercentHook] = useState(0);
+  const [selectFolderStatus, setSelectFolderStatus] = useState(false);
 
-  const getTest = async () => {
+  const getTest = async (folderId?: number) => {
     if (authContext.user) {
       const db = getFirestore();
-      const docRefWords = doc(db, "words", authContext.user.uid);
-      const docSnapWords = await getDoc(docRefWords);
+
+      const docRefFolder = doc(db, "folders", authContext.user.uid);
+      const docSnapFolder = await getDoc(docRefFolder);
 
       const docRefTest = doc(db, "test", authContext.user.uid);
       const docSnapTest = await getDoc(docRefTest);
 
       if (docSnapTest.exists()) {
         setTestWordHook(docSnapTest.data().testWordsContext);
+        if (!docSnapTest.data().testWordsContext.length) {
+          setSelectFolderStatus(true);
+        } else {
+          if (docSnapFolder.exists()) {
+            const folder = docSnapFolder.data();
+            let arr = folder.folders.find(
+              (idFol: any) => idFol.id === docSnapTest.data().folderId
+            );
+            if (arr) {
+              setAllWordsHook(arr);
+            } else {
+              deleteTestServer();
+              Router.push("/enter");
+              addNotification("testPassed", NotificationKeys.ERROR);
+            }
+          }
+        }
       }
 
-      if (docSnapWords.exists()) {
-        //@ts-ignore
-        setAllWordsHook(docSnapWords.data());
+      if (docSnapFolder.exists() && folderId) {
+        const folder = docSnapFolder.data();
+        let arr = folder.folders.find((idFol: any) => idFol.id === folderId);
+        setAllWordsHook(arr);
       }
-
       if (!docSnapTest.exists()) {
         const db = getFirestore();
         const collectionId = "test";
         const documentId = authContext.user.uid;
-
         const value = {
           percentTestContext: 0,
           testWordsContext: [],
           uid: authContext.user.uid,
+          folderId: null,
         };
-
         setDoc(doc(db, collectionId, documentId), value);
         addNotification("leastFive", NotificationKeys.ERROR);
         Router.push("/enter");
@@ -50,7 +68,7 @@ export const useTestContext = () => {
     }
   };
 
-  const setTestWordsServer = async (testWords: Word[]) => {
+  const setTestWordsServer = async (testWords: Word[], folderId?: number) => {
     if (authContext.user) {
       const db = getFirestore();
       const docRef = doc(db, "test", authContext.user.uid);
@@ -59,6 +77,9 @@ export const useTestContext = () => {
       if (docSnap.exists()) {
         let data = docSnap.data();
         data.testWordsContext = testWords;
+        if (folderId) {
+          data.folderId = folderId;
+        }
         setDoc(docRef, data);
       }
     }
@@ -101,6 +122,7 @@ export const useTestContext = () => {
         let data = docSnap.data();
         data.testWordsContext = [];
         data.percentTestContext = 0;
+        data.folderId = null;
         setDoc(docRef, data);
       }
     }
@@ -114,5 +136,6 @@ export const useTestContext = () => {
     getPercentServer,
     percentHook,
     deleteTestServer,
+    selectFolderStatus,
   };
 };

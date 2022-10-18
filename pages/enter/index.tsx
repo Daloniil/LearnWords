@@ -26,7 +26,6 @@ import {
   NotificationKeys,
   WordsParams,
 } from "../../services/localKey";
-import { findLongestWord } from "../../utils/longWord";
 
 import { useEffect, useState } from "react";
 import { Translation } from "../../models/translation/translation";

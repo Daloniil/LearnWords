@@ -13,6 +13,9 @@ export const Notification = () => {
   const { languageContext } = useLanguage();
 
   const translation = (key: string) => {
+    if (key[0] === "f") {
+      return key.substring(1);
+    }
     return setTranslation(key, notificationTranslation, languageContext);
   };
 

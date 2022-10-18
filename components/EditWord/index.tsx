@@ -4,7 +4,6 @@ import { Box, Button, capitalize, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
-import { LanguageKeys, WordsParams } from "../../services/localKey";
 import {
   buttonStyle,
   modalContainerStyle,
@@ -14,11 +13,11 @@ import {
 import { WordEditProps } from "../../Interfaces/EditWordInterface";
 import { Enter } from "../../Interfaces/EnterInterface";
 import { lowerText } from "../../utils/lowerText";
-import { findLongestWord } from "../../utils/longWord";
 import { editWordTranslation } from "../../translation/EditWord";
 import { useLanguage } from "../../hooks/useLanguage";
 import { setTranslation } from "../../utils/setTranslation";
 import { useWords } from "../../hooks/useWords";
+import { useFolders } from "../../hooks/useFolders";
 
 const emptyField = "This Field Cannot Be Empty";
 
@@ -28,6 +27,7 @@ const schema = yup.object().shape({
 });
 
 export const EditWord = ({
+  folderId,
   editId,
   wordEdit,
   handleCloseModal,
@@ -35,6 +35,7 @@ export const EditWord = ({
 }: WordEditProps) => {
   const { languageContext } = useLanguage();
   const { updateWord, deleteWord } = useWords();
+  const { updateWords, deleteWords } = useFolders();
 
   const [statusDelete, setStatusDelete] = useState(false);
 
@@ -42,7 +43,6 @@ export const EditWord = ({
     register,
     handleSubmit,
     reset,
-    setError,
     formState: { errors },
   } = useForm<Enter>({
     defaultValues: {
@@ -62,7 +62,11 @@ export const EditWord = ({
 
   const update = async (data: Enter, id: number) => {
     setStatusLoadingUser(true);
-    await updateWord(id, data);
+    if (folderId) {
+      await updateWords(folderId, id, data);
+    } else {
+      await updateWord(id, data);
+    }
     updateModal();
   };
 
@@ -71,7 +75,11 @@ export const EditWord = ({
   };
 
   const handleDeleteWord = async (id: number) => {
-    await deleteWord(id);
+    if (folderId) {
+      await deleteWords(folderId, id);
+    } else {
+      await deleteWord(id);
+    }
     setStatusDelete(true);
     handleCloseModal();
     setStatusLoadingUser(true);

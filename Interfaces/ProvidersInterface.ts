@@ -28,6 +28,13 @@ export type Word = {
   point: number;
 };
 
+export type FoldersType = {
+  id: number;
+  name: string;
+  englishWords: Word[];
+  russianWords: Word[];
+};
+
 export type NotificationContextType = {
   notification: string | null;
   statusNotification: string | null;
