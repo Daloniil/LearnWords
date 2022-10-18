@@ -82,7 +82,7 @@ export const useFolders = () => {
         arr.splice(index, 1);
 
         setDoc(docRef, { folders: arr });
-
+        addNotification("folderDelete", NotificationKeys.SUCCESS);
         setTimeout(() => {
           getFolders();
         }, 500);
@@ -103,7 +103,7 @@ export const useFolders = () => {
         const wordsEnglish = arr.englishWords as Word[];
         const wordsRussian = arr.russianWords as Word[];
 
-        let repeatingWord = "fThese words are already in the folder: ";
+        let repeatingWord = "These words are already in the folder: ";
 
         const findWords = (data: Word) => {
           return wordsEnglish.find((item) => item.word === data.word);
@@ -115,7 +115,7 @@ export const useFolders = () => {
           }
         });
 
-        if (repeatingWord.length > 40) {
+        if (repeatingWord.length > 39) {
           addNotification(`${repeatingWord}`, NotificationKeys.ERROR);
         } else {
           data.forEach((word) => {

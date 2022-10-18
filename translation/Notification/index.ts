@@ -44,4 +44,9 @@ export const notificationTranslation = [
     ru: "Папка с таким названием уже существует",
     en: "A folder with the same name already exists",
   },
+  {
+    title: "folderDelete",
+    ru: "Папку успешно удалено",
+    en: "Folder deleted successfully",
+  },
 ];

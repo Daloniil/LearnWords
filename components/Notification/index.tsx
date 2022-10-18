@@ -13,8 +13,8 @@ export const Notification = () => {
   const { languageContext } = useLanguage();
 
   const translation = (key: string) => {
-    if (key[0] === "f") {
-      return key.substring(1);
+    if (key.substr(0, 38) === "These words are already in the folder:") {
+      return key;
     }
     return setTranslation(key, notificationTranslation, languageContext);
   };
