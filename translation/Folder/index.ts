@@ -19,4 +19,9 @@ export const folderTranslation = [
     ru: "Папки",
     en: "Folders",
   },
+  {
+    title: "none",
+    ru: "Ничего",
+    en: "None",
+  },
 ];

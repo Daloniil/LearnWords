@@ -9,8 +9,6 @@ import {
 
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
-import { useNotification } from "../../hooks/useNotification";
-import { NotificationKeys } from "../../services/localKey";
 import { folderTranslation } from "../../translation/Folder";
 import { useLanguage } from "../../hooks/useLanguage";
 import { setTranslation } from "../../utils/setTranslation";
@@ -27,7 +25,6 @@ export const AddFolder = ({
   handleCloseModal: () => void;
 }) => {
   const { createFolder } = useFolders();
-  const { addNotification } = useNotification();
   const { languageContext } = useLanguage();
 
   const {
@@ -47,7 +44,6 @@ export const AddFolder = ({
       reset({
         nameFolder: "",
       });
-      addNotification("addFolder", NotificationKeys.SUCCESS);
       handleCloseModal();
     }, 500);
   };

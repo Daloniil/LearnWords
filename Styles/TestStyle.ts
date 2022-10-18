@@ -103,3 +103,9 @@ export const restartButtonStyle = {
   height: "30px",
   margin: "-5px -5px 0 auto",
 };
+
+export const circularProgress = {
+  minWidth: "100px",
+  minHeight: "100px",
+  margin: "25px auto 25px auto",
+};

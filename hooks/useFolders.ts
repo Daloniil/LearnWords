@@ -21,17 +21,27 @@ export const useFolders = () => {
 
       if (docSnap.exists()) {
         const arr = docSnap.data().folders;
+        const repeating = [];
+        arr.forEach((folder: any) => {
+          if (folder.name === nameFolder) {
+            repeating.push(folder.name);
+          }
+        });
+        if (repeating.length >= 1) {
+          addNotification(`sameFolder`, NotificationKeys.ERROR);
+        } else {
+          const newFolder = {
+            id: arr.length ? arr[arr.length - 1].id + 1 : 1,
+            name: nameFolder,
+            englishWords: [],
+            russianWords: [],
+          };
+          arr.push(newFolder);
 
-        const newFolder = {
-          id: arr.length ? arr[arr.length - 1].id + 1 : 1,
-          name: nameFolder,
-          englishWords: [],
-          russianWords: [],
-        };
-        arr.push(newFolder);
-
-        setDoc(docRef, { folders: arr });
-        return;
+          setDoc(docRef, { folders: arr });
+          addNotification("addFolder", NotificationKeys.SUCCESS);
+          return;
+        }
       }
     }
   };
@@ -93,26 +103,42 @@ export const useFolders = () => {
         const wordsEnglish = arr.englishWords as Word[];
         const wordsRussian = arr.russianWords as Word[];
 
+        let repeatingWord = "fThese words are already in the folder: ";
+
+        const findWords = (data: Word) => {
+          return wordsEnglish.find((item) => item.word === data.word);
+        };
+
         data.forEach((word) => {
-          const newEnglishWord = {
-            id: word.id,
-            word: word.word,
-            correctTranslation: word.correctTranslation,
-            point: word.point,
-          };
-          const newRussianWord = {
-            id: word.id,
-            word: word.correctTranslation,
-            correctTranslation: word.word,
-            point: word.point,
-          };
-          wordsEnglish.push(newEnglishWord);
-          wordsRussian.push(newRussianWord);
+          if (findWords(word)) {
+            repeatingWord = repeatingWord + ` ${word.word},`;
+          }
         });
 
-        addNotification("wordAdd", NotificationKeys.SUCCESS);
-        setDoc(docRef, folder);
-        return;
+        if (repeatingWord.length > 40) {
+          addNotification(`${repeatingWord}`, NotificationKeys.ERROR);
+        } else {
+          data.forEach((word) => {
+            const newEnglishWord = {
+              id: word.id,
+              word: word.word,
+              correctTranslation: word.correctTranslation,
+              point: word.point,
+            };
+            const newRussianWord = {
+              id: word.id,
+              word: word.correctTranslation,
+              correctTranslation: word.word,
+              point: word.point,
+            };
+            wordsEnglish.push(newEnglishWord);
+            wordsRussian.push(newRussianWord);
+          });
+
+          addNotification("wordAdd", NotificationKeys.SUCCESS);
+          setDoc(docRef, folder);
+          return;
+        }
       }
     }
   };

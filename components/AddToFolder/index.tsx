@@ -1,4 +1,14 @@
-import { Box, Button, Modal, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Modal,
+  Select,
+  SelectChangeEvent,
+  Typography,
+} from "@mui/material";
 import { useEffect, useState } from "react";
 import { useFolders } from "../../hooks/useFolders";
 import { useLanguage } from "../../hooks/useLanguage";
@@ -6,6 +16,7 @@ import { useTheme } from "../../hooks/useTheme";
 import { Word } from "../../Interfaces/ProvidersInterface";
 import { modalStyle } from "../../Styles/DictionaryStyle";
 import { titleStyle } from "../../Styles/EditWordStyle";
+import { boxSelect } from "../../Styles/FoldersStyle";
 import { folderTranslation } from "../../translation/Folder";
 import { setTranslation } from "../../utils/setTranslation";
 import { AddFolder } from "../AddFolder";
@@ -22,6 +33,12 @@ export const AddToFolder = ({
   const { languageContext } = useLanguage();
 
   const [openModal, setOpenModal] = useState(false);
+
+  const [title, setTitle] = useState("-1");
+
+  const handleChange = (event: SelectChangeEvent) => {
+    setTitle(event.target.value as string);
+  };
 
   const handleCloseModalAdd = () => {
     setOpenModal(!openModal);
@@ -56,30 +73,32 @@ export const AddToFolder = ({
       <Box sx={{ width: "200px" }}>
         <Typography sx={titleStyle}>{translation("selectFolder")}</Typography>
 
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-around",
-            margin: "-20px 0 0 0",
-          }}
-        >
-          <Box sx={{ margin: "30px 0 0 0" }}>
-            {foldersHook.map((item) => (
-              <Typography
-                onClick={() => {
-                  handleCloseModal(), addWords(moveWord, item.id);
-                }}
-                sx={{
-                  margin: "2.5px 0 2.5px 5px",
-                  fontSize: "16px",
-                  padding: "2px",
-                  border: "solid 1px",
-                  textAlign: "center",
-                }}
+        <Box sx={boxSelect}>
+          <Box sx={{ minWidth: 120 }}>
+            <FormControl fullWidth>
+              <InputLabel id="demo-simple-select-label">
+                {translation("Folders")}
+              </InputLabel>
+              <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                value={title}
+                label="Age"
+                onChange={handleChange}
               >
-                {item.name}
-              </Typography>
-            ))}
+                <MenuItem value={-1}>{translation("none")}</MenuItem>
+                {foldersHook.map((item) => (
+                  <MenuItem
+                    onClick={() => {
+                      handleCloseModal(), addWords(moveWord, item.id);
+                    }}
+                    value={item.id}
+                  >
+                    {item.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Box>
 
           <Button onClick={() => handleCloseModalAdd()}>

@@ -39,4 +39,9 @@ export const notificationTranslation = [
     ru: "Вы должны выбрать слово",
     en: "You must select word",
   },
+  {
+    title: "sameFolder",
+    ru: "Папка с таким названием уже существует",
+    en: "A folder with the same name already exists",
+  },
 ];

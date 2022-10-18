@@ -1,4 +1,11 @@
-import { Box, Button, capitalize, Modal, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  capitalize,
+  CircularProgress,
+  Modal,
+  Typography,
+} from "@mui/material";
 import Router from "next/router";
 import { useEffect, useState } from "react";
 import { AddFolder } from "../../components/AddFolder";
@@ -12,6 +19,7 @@ import {
   deleteButtonStyle,
   elemStats,
   indentsBoxStyle,
+  scrollStatsStyle,
   statsBoxStyle,
   titleTestStyle,
 } from "../../Styles/StatsStyle";
@@ -27,10 +35,21 @@ const FoldersPage = () => {
   const { languageContext } = useLanguage();
 
   const [openModal, setOpenModal] = useState(false);
+  const [statusLoading, setStatusLoading] = useState(false);
 
   const handleCloseModal = () => {
     setOpenModal(!openModal);
     getFolders();
+    if (openModal) {
+      reload;
+    }
+  };
+
+  const reload = () => {
+    setStatusLoading(true);
+    setTimeout(() => {
+      setStatusLoading(false);
+    }, 500);
   };
 
   const translation = (key: string) => {
@@ -40,6 +59,7 @@ const FoldersPage = () => {
   useEffect(() => {
     checkingLogin(LoginStatus.OTHER);
     getFolders();
+    reload();
   }, []);
   return (
     <>
@@ -58,49 +78,61 @@ const FoldersPage = () => {
           <AddFolder handleCloseModal={handleCloseModal} />
         </Box>
       </Modal>
-      <Box sx={topBarFolder}>
-        <Typography sx={titleFolders}>{translation("folders")}</Typography>
-        <Button
-          onClick={() => handleCloseModal()}
-          sx={{ margin: "0 0 0 auto" }}
-        >
-          {translation("add")}
-        </Button>
-      </Box>
-
-      <Box>
-        {foldersHook.map((item, index) => (
-          <Box key={item.id} sx={statsBoxStyle}>
-            <Typography
-              sx={deleteButtonStyle}
-              onClick={() => deleteFolder(item.id)}
-              color={"error"}
+      {statusLoading ? (
+        <CircularProgress
+          sx={{
+            minWidth: "100px",
+            minHeight: "100px",
+            margin: "25px auto 25px auto",
+          }}
+        />
+      ) : (
+        <>
+          <Box sx={topBarFolder}>
+            <Typography sx={titleFolders}>{translation("folders")}</Typography>
+            <Button
+              onClick={() => handleCloseModal()}
+              sx={{ margin: "0 0 0 auto" }}
             >
-              <DeleteForeverIcon />
-            </Typography>
-            <Box
-              sx={indentsBoxStyle}
-              onClick={() => Router.push(`/folders/${item.id}`)}
-            >
-              <Typography sx={titleTestStyle}>{item.name}</Typography>
+              {translation("add")}
+            </Button>
+          </Box>
 
-              <Typography sx={elemStats} lang="ru">
-                {item.englishWords[0]
-                  ? `     1. ${capitalize(item.englishWords[0].word)}
+          <Box sx={scrollStatsStyle}>
+            {foldersHook.map((item, index) => (
+              <Box key={item.id} sx={statsBoxStyle}>
+                <Typography
+                  sx={deleteButtonStyle}
+                  onClick={() => deleteFolder(item.id)}
+                  color={"error"}
+                >
+                  <DeleteForeverIcon />
+                </Typography>
+                <Box
+                  sx={indentsBoxStyle}
+                  onClick={() => Router.push(`/folders/${item.id}`)}
+                >
+                  <Typography sx={titleTestStyle}>{item.name}</Typography>
+
+                  <Typography sx={elemStats} lang="ru">
+                    {item.englishWords[0]
+                      ? `     1. ${capitalize(item.englishWords[0].word)}
                 - 
                 ${capitalize(item.englishWords[0].correctTranslation)}`
-                  : ""}
-              </Typography>
+                      : ""}
+                  </Typography>
 
-              {item.englishWords[1]
-                ? `     2. ${capitalize(item.englishWords[1].word)}
+                  {item.englishWords[1]
+                    ? `     2. ${capitalize(item.englishWords[1].word)}
                 - 
                 ${capitalize(item.englishWords[1].correctTranslation)}`
-                : ""}
-            </Box>
+                    : ""}
+                </Box>
+              </Box>
+            ))}
           </Box>
-        ))}
-      </Box>
+        </>
+      )}
     </>
   );
 };

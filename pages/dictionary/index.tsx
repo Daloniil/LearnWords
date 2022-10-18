@@ -75,7 +75,6 @@ const DictionaryPage = () => {
   const handleCloseModalFolder = () => {
     if (moveWord.length) {
       setOpenModalFolder(!openModalFolder);
-      openModalFolder ? setSelectStatus(!selectStatus) : "";
     } else {
       addNotification("selectWords", NotificationKeys.ERROR);
     }

@@ -11,3 +11,9 @@ export const titleFolder = {
   fontWeight: "800",
   margin: "0 0 10px 0 ",
 };
+
+export const boxSelect = {
+  display: "flex",
+  justifyContent: "space-around",
+  padding: "10px",
+};
