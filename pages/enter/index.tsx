@@ -28,9 +28,9 @@ import {
 } from "../../services/localKey";
 
 import { useEffect, useState } from "react";
-import { Translation } from "../../models/translation/translation";
+import { Translation } from "../../Interfaces/translation/translation";
 import { TranslationService } from "../../services/translationService";
-import { TranslationData } from "../../models/translation/translationResult";
+import { TranslationData } from "../../Interfaces/translation/translationResult";
 import { useDebounce } from "../../hooks/useDebounce";
 import { boxTranslationStyle, loadingStyle } from "../../Styles/TestStyle";
 import { enterTranslation } from "../../translation/Enter";
