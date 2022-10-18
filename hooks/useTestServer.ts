@@ -40,7 +40,7 @@ export const useTestContext = () => {
             } else {
               deleteTestServer();
               Router.push("/enter");
-              addNotification("testPassed", NotificationKeys.ERROR);
+              addNotification("notFoundTest", NotificationKeys.ERROR);
             }
           }
         }

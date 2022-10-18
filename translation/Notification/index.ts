@@ -5,6 +5,11 @@ export const notificationTranslation = [
     en: "Test passed successfully",
   },
   {
+    title: "notFoundTest",
+    ru: "Тест не найден",
+    en: "Test is't found",
+  },
+  {
     title: "wordAdd",
     ru: "Слово успешно добавлено",
     en: "Word added successfully",
