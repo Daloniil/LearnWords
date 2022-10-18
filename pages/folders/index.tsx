@@ -103,7 +103,9 @@ const FoldersPage = () => {
               <Box key={item.id} sx={statsBoxStyle}>
                 <Typography
                   sx={deleteButtonStyle}
-                  onClick={() => deleteFolder(item.id)}
+                  onClick={() => {
+                    deleteFolder(item.id), reload();
+                  }}
                   color={"error"}
                 >
                   <DeleteForeverIcon />
