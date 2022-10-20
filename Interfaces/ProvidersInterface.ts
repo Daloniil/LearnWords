@@ -42,11 +42,6 @@ export type NotificationContextType = {
   removeNotification: () => void;
 };
 
-export type TitleContextType = {
-  title: string | null;
-  addTitle: (title: string) => void;
-};
-
 export type LanguageContextType = {
   languageContext: string;
   setLanguageContext: (language: string) => void;
@@ -60,13 +55,6 @@ export type OneStat = {
 export type Stats = {
   id: number;
   stat: OneStat[];
-};
-
-export type StatsContextType = {
-  stats: Stats[];
-  addWord: (word: string, translation: string) => void;
-  addStats: () => void;
-  deleteStats: (id: number) => void;
 };
 
 export type ThemeContextType = {
