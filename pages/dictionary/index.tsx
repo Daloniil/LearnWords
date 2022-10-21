@@ -67,9 +67,13 @@ const DictionaryPage = () => {
     const [selectStatusComp, setSelectStatusComp] = useState([] as boolean[]);
     const [moveWord, setMoveWord] = useState([] as Word[]);
 
+
+    const handleWithOutUpdate = () => setOpenModalEdit(!openModalEdit);
+
     const handleCloseModalEdit = () => {
         setOpenModalEdit(!openModalEdit);
         getWord();
+        clearStatus()
     };
 
     const handleCloseModalFolder = () => {
@@ -80,9 +84,8 @@ const DictionaryPage = () => {
         }
     };
 
-    const textFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchWord(e.target.value.toLowerCase());
-    };
+    const textFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => setSearchWord(e.target.value.toLowerCase());
+
 
     const searchingWord = () => {
         const wordsArray = search(words, searchWord);
@@ -90,7 +93,7 @@ const DictionaryPage = () => {
     };
 
     const setWordModal = (word: Word) => {
-        handleCloseModalEdit();
+        handleWithOutUpdate();
         setEditWord(word);
         setEditId(word.id);
     };
@@ -158,7 +161,7 @@ const DictionaryPage = () => {
         <>
             <Modal
                 open={openModalEdit}
-                onClose={handleCloseModalEdit}
+                onClose={handleWithOutUpdate}
                 aria-labelledby="simple-modal-title"
                 aria-describedby="simple-modal-description"
             >
@@ -290,7 +293,6 @@ const DictionaryPage = () => {
                                             </Typography>
                                         </TableCell>
                                         <TableCell
-                                            onClick={handleCloseModalEdit}
                                             sx={{maxWidth: "150px"}}
                                         >
                                             <Typography lang="ru" sx={wordsStyle}>
