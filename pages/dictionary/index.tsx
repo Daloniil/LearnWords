@@ -68,6 +68,8 @@ const DictionaryPage = () => {
     const [moveWord, setMoveWord] = useState([] as Word[]);
 
 
+
+
     const handleWithOutUpdate = () => setOpenModalEdit(!openModalEdit);
 
     const handleCloseModalEdit = () => {
@@ -179,6 +181,8 @@ const DictionaryPage = () => {
                     />
                 </Box>
             </Modal>
+
+            
 
             <Modal
                 open={openModalFolder}

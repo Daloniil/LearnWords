@@ -1,111 +1,123 @@
 import {
-  Box,
-  Button,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Modal,
-  Select,
-  SelectChangeEvent,
-  Typography,
+    Box,
+    Button,
+    FormControl,
+    InputLabel,
+    MenuItem,
+    Modal,
+    Select,
+    SelectChangeEvent,
+    Typography,
 } from "@mui/material";
-import { useEffect, useState } from "react";
-import { useFolders } from "../../hooks/useFolders";
-import { useLanguage } from "../../hooks/useLanguage";
-import { useTheme } from "../../hooks/useTheme";
-import { Word } from "../../Interfaces/ProvidersInterface";
-import { modalStyle } from "../../Styles/DictionaryStyle";
-import { titleStyle } from "../../Styles/EditWordStyle";
-import { boxSelect } from "../../Styles/FoldersStyle";
-import { folderTranslation } from "../../translation/Folder";
-import { setTranslation } from "../../utils/setTranslation";
-import { AddFolder } from "../AddFolder";
+import {makeStyles} from "@material-ui/core/styles";
+import {useEffect, useState} from "react";
+import {useFolders} from "../../hooks/useFolders";
+import {useLanguage} from "../../hooks/useLanguage";
+import {useTheme} from "../../hooks/useTheme";
+import {Word} from "../../Interfaces/ProvidersInterface";
+import {modalStyle} from "../../Styles/DictionaryStyle";
+import {titleStyle} from "../../Styles/EditWordStyle";
+import {boxSelect} from "../../Styles/FoldersStyle";
+import {folderTranslation} from "../../translation/Folder";
+import {setTranslation} from "../../utils/setTranslation";
+import {AddFolder} from "../AddFolder";
+
+const useStyles = makeStyles(({
+    menuPaper: {
+        maxHeight: 260
+    }
+}));
 
 export const AddToFolder = ({
-  handleCloseModal,
-  moveWord,
-}: {
-  handleCloseModal: () => void;
-  moveWord: Word[];
+                                handleCloseModal,
+                                moveWord,
+                            }: {
+    handleCloseModal: () => void;
+    moveWord: Word[];
 }) => {
-  const { getFolders, foldersHook, addWords } = useFolders();
-  const { themeContext } = useTheme();
-  const { languageContext } = useLanguage();
+    const {getFolders, foldersHook, addWords} = useFolders();
+    const {themeContext} = useTheme();
+    const {languageContext} = useLanguage();
 
-  const [openModal, setOpenModal] = useState(false);
+    const classes = useStyles();
 
-  const [title, setTitle] = useState("-1");
+    const [openModal, setOpenModal] = useState(false);
 
-  const handleChange = (event: SelectChangeEvent) => {
-    setTitle(event.target.value as string);
-  };
+    const [title, setTitle] = useState("-1");
 
-  const handleCloseModalAdd = () => {
-    setOpenModal(!openModal);
-    getFolders();
-  };
+    const handleChange = (event: SelectChangeEvent) => {
+        setTitle(event.target.value as string);
+    };
 
-  const translation = (key: string) => {
-    return setTranslation(key, folderTranslation, languageContext);
-  };
+    const handleCloseModalAdd = () => {
+        setOpenModal(!openModal);
+        getFolders();
+    };
 
-  useEffect(() => {
-    getFolders();
-  }, []);
+    const translation = (key: string) => {
+        return setTranslation(key, folderTranslation, languageContext);
+    };
 
-  return (
-    <>
-      <Modal
-        open={openModal}
-        onClose={handleCloseModalAdd}
-        aria-labelledby="simple-modal-title"
-        aria-describedby="simple-modal-description"
-      >
-        <Box
-          sx={modalStyle}
-          style={{
-            backgroundColor: themeContext === "dark" ? "#232323" : "white",
-          }}
-        >
-          <AddFolder handleCloseModal={handleCloseModalAdd} />
-        </Box>
-      </Modal>
-      <Box sx={{ width: "200px" }}>
-        <Typography sx={titleStyle}>{translation("selectFolder")}</Typography>
+    useEffect(() => {
+        getFolders();
+    }, []);
 
-        <Box sx={boxSelect}>
-          <Box sx={{ minWidth: 120 }}>
-            <FormControl fullWidth>
-              <InputLabel id="demo-simple-select-label">
-                {translation("Folders")}
-              </InputLabel>
-              <Select
-                labelId="demo-simple-select-label"
-                id="demo-simple-select"
-                value={title}
-                label="Age"
-                onChange={handleChange}
-              >
-                <MenuItem value={-1}>{translation("none")}</MenuItem>
-                {foldersHook.map((item) => (
-                  <MenuItem
-                    onClick={() => {
-                      handleCloseModal(), addWords(moveWord, item.id);
+    return (
+        <>
+            <Modal
+                open={openModal}
+                onClose={handleCloseModalAdd}
+                aria-labelledby="simple-modal-title"
+                aria-describedby="simple-modal-description"
+            >
+                <Box
+                    sx={modalStyle}
+                    style={{
+                        backgroundColor: themeContext === "dark" ? "#232323" : "white",
                     }}
-                    value={item.id}
-                  >
-                    {item.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
+                >
+                    <AddFolder handleCloseModal={handleCloseModalAdd}/>
+                </Box>
+            </Modal>
+            <Box sx={{width: "200px"}}>
+                <Typography sx={titleStyle}>{translation("selectFolder")}</Typography>
 
-          <Button onClick={() => handleCloseModalAdd()}>
-            {translation("add")}
-          </Button>
-        </Box>
-      </Box>
-    </>
-  );
+                <Box sx={boxSelect}>
+                    <Box sx={{minWidth: 120}}>
+                        <FormControl fullWidth>
+                            <InputLabel id="demo-simple-select-label">
+                                {translation("Folders")}
+                            </InputLabel>
+                            <Select
+                                labelId="demo-simple-select-label"
+                                id="demo-simple-select"
+                                value={title}
+                                label="Age"
+                                onChange={handleChange}
+                                MenuProps={{classes: {paper: classes.menuPaper}}}
+                            >
+                                <MenuItem value={-1}>{translation("none")}</MenuItem>
+
+
+                                {foldersHook.map((item) => (
+                                    <MenuItem
+                                        onClick={() => {
+                                            handleCloseModal(), addWords(moveWord, item.id);
+                                        }}
+                                        value={item.id}
+                                    >
+                                        {item.name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </Box>
+
+                    <Button onClick={() => handleCloseModalAdd()}>
+                        {translation("add")}
+                    </Button>
+                </Box>
+            </Box>
+        </>
+    );
 };
