@@ -68,14 +68,12 @@ const DictionaryPage = () => {
     const [moveWord, setMoveWord] = useState([] as Word[]);
 
 
-
-
     const handleWithOutUpdate = () => setOpenModalEdit(!openModalEdit);
 
     const handleCloseModalEdit = () => {
         setOpenModalEdit(!openModalEdit);
         getWord();
-        clearStatus()
+        clearStatus(false)
     };
 
     const handleCloseModalFolder = () => {
@@ -112,8 +110,8 @@ const DictionaryPage = () => {
         setSelectStatusComp(statusArr);
     };
 
-    const clearStatus = () => {
-        setSelectStatus(!selectStatus), emptyStatus(), setMoveWord([]);
+    const clearStatus = (stat?: boolean) => {
+        setSelectStatus(stat ?? !selectStatus), emptyStatus(), setMoveWord([]);
     };
 
     const clickSelectButton = (index: number, item: Word) => {
@@ -182,7 +180,6 @@ const DictionaryPage = () => {
                 </Box>
             </Modal>
 
-            
 
             <Modal
                 open={openModalFolder}
