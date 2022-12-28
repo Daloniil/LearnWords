@@ -48,7 +48,13 @@ const Layout = ({children}: LayoutProps) => {
 
     return (
         <ThemeProvider theme={theme}>
-            <Snowfall/>
+            <Snowfall
+                color={themeContext === Mode.DARK ? "#dee4fd" : '#03a9f4'}
+                snowflakeCount={200}
+                radius={[0.5, 3]}
+                speed={[0.5, 3]}
+                wind={[-0.5, 3]}
+            />
             <Box sx={{display: "flex"}}>
                 <CssBaseline/>
                 <Bar

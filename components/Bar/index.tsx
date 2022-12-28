@@ -19,7 +19,7 @@ export const Bar = ({ title, setOpen }: BarProps) => {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.enteringScreen,
     }),
-    backgroundColor: "#32cd32",
+    backgroundColor: "#1c54b2",
   }));
 
   return (
