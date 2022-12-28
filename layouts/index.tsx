@@ -46,7 +46,6 @@ const Layout = ({children}: LayoutProps) => {
         );
     }, [themeContext]);
 
-
     return (
         <ThemeProvider theme={theme}>
             <Snowfall/>
