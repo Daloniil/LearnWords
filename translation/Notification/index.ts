@@ -21,8 +21,8 @@ export const notificationTranslation = [
   },
   {
     title: "leastFive",
-    ru: "В вашем словаре должно быть не менее 5 слов",
-    en: "Your dictionary must have at least 5 words",
+    ru: "В вашем словаре должно быть не менее 5 слов или у вас быть создан хоть одна папка",
+    en: "Your dictionary must have at least 5 words or you need to create one folder",
   },
   {
     title: "wordDelete",
