@@ -3,7 +3,7 @@
 const nextConfig = {
   reactStrictMode: true,
   env: {
-    API_URL:'https://microsoft-translator-text.p.rapidapi.com'
+    API_URL:'https://text-translator2.p.rapidapi.com/'
   },async redirects() {
     return [
       {

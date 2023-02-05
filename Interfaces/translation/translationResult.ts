@@ -1,13 +1,8 @@
 export interface TranslationResult {
-  data: TranslationData[];
+    data: TranslationData;
 }
 
 export interface TranslationData {
-  detectedLanguage: { language: string; score: number };
-  translations: Translations[];
+    translatedText: string;
 }
 
-interface Translations {
-  text: string;
-  ro: string;
-}

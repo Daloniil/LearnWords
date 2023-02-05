@@ -1,4 +1,4 @@
-import { Auth, Stats, Word } from "../Interfaces/ProvidersInterface";
+import { Auth } from "../Interfaces/ProvidersInterface";
 import { ContextKey } from "./localKey";
 
 type ItemType = string;

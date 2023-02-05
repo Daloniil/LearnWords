@@ -11,7 +11,7 @@ import {AuthProvider} from "../providers/AuthProvider";
 const MyApp = ({Component, pageProps}: AppProps) => {
     return (
         <ThemeProviderContext>
-            <LanguageProvider>z
+            <LanguageProvider>
                 <NotificationProvider>
                     <AuthProvider>
                         <Layout>
