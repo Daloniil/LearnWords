@@ -221,24 +221,24 @@ const EnterPage = () => {
                                         lang === "ru"
                                             ? setValue(
                                                 "russianWord",
-                                                authContext.user.uid === 'Gj3WAXTHGXWryRK9HDNsAancx7h1'?'Pay 10$':translatedText
+                                                translatedText
                                             )
                                             : setValue(
                                                 "englishWord",
-                                                authContext.user.uid === 'Gj3WAXTHGXWryRK9HDNsAancx7h1'?'Pay 10$':translatedText
+                                                translatedText
                                             );
                                     }}
                                 >
                                     {lang === "ru" ? (
                                         <Typography lang={lang} sx={translateWord}>
                                             {translatedText[0]
-                                                ? capitalize(authContext.user.uid === 'Gj3WAXTHGXWryRK9HDNsAancx7h1'?'Pay 10$':translatedText)
+                                                ? capitalize(translatedText)
                                                 : ""}
                                         </Typography>
                                     ) : (
                                         <Typography lang="en" sx={translateWord}>
                                             {translatedText[0]
-                                                ? capitalize(authContext.user.uid === 'Gj3WAXTHGXWryRK9HDNsAancx7h1'?'Pay 10$':translatedText)
+                                                ? capitalize(translatedText)
                                                 : ""}
                                         </Typography>
                                     )}
