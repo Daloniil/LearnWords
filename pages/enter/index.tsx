@@ -45,13 +45,12 @@ const EnterPage = () => {
     const {languageContext} = useLanguage();
     const {checkingLogin} = useLogin();
     const {addWord, speakWord} = useWords();
-    const { authContext } = useAuth();
 
     const [translateEnglish, setTranslateEnglish] = useState("");
     const [translateRussian, setTranslateRussian] = useState("");
 
-    const debouncedSearchValueEnglish = useDebounce(translateEnglish, 200);
-    const debouncedSearchValueRussian = useDebounce(translateRussian, 200);
+    const debouncedSearchValueEnglish = useDebounce(translateEnglish, 1000);
+    const debouncedSearchValueRussian = useDebounce(translateRussian, 1000);
 
     const [loading, setLoading] = useState(false);
     const [translatedText, setTranslatedText] = useState("" as string);
