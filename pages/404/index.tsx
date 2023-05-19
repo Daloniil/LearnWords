@@ -1,5 +1,5 @@
-import Router from "next/router";
-import {useEffect} from "react";
+import { useEffect } from 'react';
+import Button from '@material-ui/core/Button';
 
 const ButtonComponent = () => {
     useEffect(() => {
@@ -9,15 +9,21 @@ const ButtonComponent = () => {
         };
 
         const button = document.getElementById('your-button-id');
-        button.addEventListener('click', handleClick);
+        if (button) {
+            button.addEventListener('click', handleClick);
+        }
 
         return () => {
-            button.removeEventListener('click', handleClick);
+            if (button) {
+                button.removeEventListener('click', handleClick);
+            }
         };
     }, []);
 
     return (
-        <button id="your-button-id">Нажми меня</button>
+        <Button id="your-button-id" variant="contained" color="primary">
+            Нажми меня
+        </Button>
     );
 };
 
@@ -25,9 +31,8 @@ const ErrorPage = () => {
     useEffect(() => {
         // Router.push("/login");
     }, []);
-    return <>
-        <ButtonComponent/>
-    </>;
+
+    return <ButtonComponent />;
 };
 
 export default ErrorPage;
