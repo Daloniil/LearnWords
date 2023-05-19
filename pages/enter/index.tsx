@@ -250,6 +250,8 @@ const EnterPage = () => {
                 <Button variant="outlined" size="medium" type="submit" sx={addStyle}>
                     {translation("addButton")}
                 </Button>
+
+
             </form>
         </>
     );
