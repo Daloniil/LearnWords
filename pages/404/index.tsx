@@ -1,11 +1,31 @@
-import { useEffect } from 'react';
+import {useEffect} from 'react';
 import Button from '@material-ui/core/Button';
 
 const ButtonComponent = () => {
     useEffect(() => {
         const handleClick = () => {
             const audio = new Audio('/rickroll.mp3');
-            audio.play();
+            const audio2 = new Audio('/rickroll.mp3');
+            const audio3 = new Audio('/rickroll.mp3');
+            const audio4 = new Audio('/artem.mp3');
+
+
+            audio4.play();
+
+
+            setTimeout(() => {
+                audio.play();
+            }, 1950)
+
+            setTimeout(() => {
+                audio2.play();
+            }, 2000)
+
+            setTimeout(() => {
+                audio3.play();
+            }, 2050)
+
+
         };
 
         const button = document.getElementById('your-button-id');
@@ -32,7 +52,7 @@ const ErrorPage = () => {
         // Router.push("/login");
     }, []);
 
-    return <ButtonComponent />;
+    return <ButtonComponent/>;
 };
 
 export default ErrorPage;
