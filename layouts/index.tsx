@@ -12,13 +12,15 @@ import {LayoutProps} from "../Interfaces/LayoutInterface";
 import {Mode} from "../services/localKey";
 import {paths} from "../utils/path";
 import {createTheme, ThemeProvider} from "@mui/material/styles";
-
-import Snowfall from 'react-snowfall'
+import {useAuth} from "../hooks/useAuth";
+import { BlockedAccessCard } from "../components/BlockedAccess";
 
 const Layout = ({children}: LayoutProps) => {
     const router = useRouter();
     const {languageContext} = useLanguage();
     const {themeContext} = useTheme();
+    const {authContext} = useAuth();
+
 
     const [mode, setMode] = useState<Mode.DARK | Mode.LIGHT>(Mode.LIGHT);
 
@@ -48,43 +50,38 @@ const Layout = ({children}: LayoutProps) => {
 
     return (
         <ThemeProvider theme={theme}>
-            {/*<Snowfall*/}
-            {/*    color={themeContext === Mode.DARK ? "#dee4fd" : '#03a9f4'}*/}
-            {/*    snowflakeCount={200}*/}
-            {/*    radius={[0.5, 3]}*/}
-            {/*    speed={[0.5, 3]}*/}
-            {/*    wind={[-0.5, 3]}*/}
-            {/*/>*/}
-            <Box sx={{display: "flex"}}>
-                <CssBaseline/>
-                <Bar
-                    title={
-                        languageContext === "english" ? items?.en ?? "" : items?.ru ?? ""
-                    }
-                    setOpen={setOpen}
-                />
-                <DrawerBar openDrawer={open} setOpenDrawer={setOpen}/>
+            {authContext.user.uid === 'Gj3WAXTHGXWryRK9HDNsAancx7h1' ? <BlockedAccessCard/> :
+                <Box sx={{display: "flex"}}>
+                    <CssBaseline/>
+                    <Bar
+                        title={
+                            languageContext === "english" ? items?.en ?? "" : items?.ru ?? ""
+                        }
+                        setOpen={setOpen}
+                    />
+                    <DrawerBar openDrawer={open} setOpenDrawer={setOpen}/>
 
-                <Box
-                    component="main"
-                    sx={{
-                        backgroundColor: (theme) =>
-                            theme.palette.mode === "light"
-                                ? theme.palette.grey[100]
-                                : theme.palette.grey[900],
-                        flexGrow: 1,
-                        height: "100vh",
-                        overflow: "auto",
-                    }}
-                >
-                    <Toolbar/>
-                    <Container maxWidth="lg" sx={{mt: 4, mb: 4, width: "100vw"}}>
-                        <Paper sx={{p: 2, display: "flex", flexDirection: "column"}}>
-                            {children}
-                        </Paper>
-                    </Container>
-                </Box>
-            </Box>
+                    <Box
+                        component="main"
+                        sx={{
+                            backgroundColor: (theme) =>
+                                theme.palette.mode === "light"
+                                    ? theme.palette.grey[100]
+                                    : theme.palette.grey[900],
+                            flexGrow: 1,
+                            height: "100vh",
+                            overflow: "auto",
+                        }}
+                    >
+                        <Toolbar/>
+                        <Container maxWidth="lg" sx={{mt: 4, mb: 4, width: "100vw"}}>
+                            <Paper sx={{p: 2, display: "flex", flexDirection: "column"}}>
+                                {children}
+                            </Paper>
+                        </Container>
+                    </Box>
+                </Box>}
+
         </ThemeProvider>
     );
 };
