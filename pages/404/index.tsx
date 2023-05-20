@@ -1,4 +1,4 @@
-import {useEffect} from 'react';
+import { useEffect } from 'react';
 import Button from '@material-ui/core/Button';
 
 const ButtonComponent = () => {
@@ -7,23 +7,25 @@ const ButtonComponent = () => {
             const audio = new Audio('/rickroll.mp3');
             const audio2 = new Audio('/rickroll.mp3');
             const audio3 = new Audio('/rickroll.mp3');
-            const audio4 = new Audio('/artem.mp3');
+            const audio4 = new Audio('/rickroll.mp3');
 
+            audio.play();
 
-            audio4.play();
-
-
-            setTimeout(() => {
-                audio.play();
-            }, 1950)
-
-            setTimeout(() => {
+            setTimeout(()=>{
                 audio2.play();
-            }, 2000)
+            },50)
 
-            setTimeout(() => {
+            setTimeout(()=>{
                 audio3.play();
-            }, 2050)
+            },100)
+            setTimeout(()=>{
+                audio4.play();
+            },150)
+
+
+
+
+
 
 
         };
@@ -52,7 +54,7 @@ const ErrorPage = () => {
         // Router.push("/login");
     }, []);
 
-    return <ButtonComponent/>;
+    return <ButtonComponent />;
 };
 
 export default ErrorPage;
