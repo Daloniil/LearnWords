@@ -21,7 +21,6 @@ const Layout = ({children}: LayoutProps) => {
     const {themeContext} = useTheme();
     const {authContext} = useAuth();
 
-
     const [mode, setMode] = useState<Mode.DARK | Mode.LIGHT>(Mode.LIGHT);
 
     const [open, setOpen] = useState(false);
@@ -50,7 +49,7 @@ const Layout = ({children}: LayoutProps) => {
 
     return (
         <ThemeProvider theme={theme}>
-            {authContext.user.uid === 'Gj3WAXTHGXWryRK9HDNsAancx7h1' ? <BlockedAccessCard/> :
+            {authContext.user.uid === '' ? <BlockedAccessCard/> :
                 <Box sx={{display: "flex"}}>
                     <CssBaseline/>
                     <Bar
