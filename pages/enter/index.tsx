@@ -62,7 +62,7 @@ const EnterPage = () => {
         englishWord: yup.string().required("This Field Cannot Be Empty"),
         russianWord: yup.string().required("This Field Cannot Be Empty"),
     });
-
+    alert("Как дела")
     const {
         register,
         handleSubmit,
