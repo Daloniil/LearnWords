@@ -156,7 +156,6 @@ const DictionaryPage = () => {
     useEffect(() => {
         emptyStatus();
     }, [words]);
-        alert("Привет")
 
     return (
         <>
