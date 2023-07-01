@@ -7,5 +7,5 @@ export type MetroStation = {
 
 export type StationInfo =
     | { type: 'station'; name: string; line: 'red' | 'blue' | 'green' }
-    | { type: 'between'; first: string; second: string, timeToNextStation: number }
+    | { type: 'between'; first: string; second: string, line: 'red' | 'blue' | 'green' }
     | { type: 'none' }
