@@ -4,6 +4,7 @@ import {metroStations} from "../../utils/station";
 import {StationInfo} from "../../Interfaces/MetroInterface";
 import {CircularProgress, Typography, Card, CardContent, Box} from '@mui/material';
 import {makeStyles} from '@mui/styles';
+import {useGeo} from "../../hooks/useGeo";
 
 const useStyles = makeStyles({
     card: {
@@ -18,6 +19,8 @@ const useStyles = makeStyles({
 
 const MetroLocator: React.FC = () => {
     const classes = useStyles();
+    const {addGeo} = useGeo()
+
     const [stationInfo, setStationInfo] = useState<StationInfo | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
 
@@ -29,6 +32,8 @@ const MetroLocator: React.FC = () => {
                     latitude: position.coords.latitude,
                     longitude: position.coords.longitude,
                 };
+
+                addGeo(position.coords.latitude, position.coords.longitude)
 
                 const nearestStations = metroStations
                     .map((station) => ({
