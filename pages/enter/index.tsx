@@ -62,6 +62,7 @@ const EnterPage = () => {
         register,
         handleSubmit,
         formState: {errors},
+        setError,
         reset,
         setValue,
     } = useForm<Enter>({resolver: yupResolver(schema)});
@@ -118,67 +119,134 @@ const EnterPage = () => {
         checkingLogin(LoginStatus.OTHER);
     }, []);
 
-
     return (
         <>
             <Box sx={titleStyle}>{translation("enterWord")}</Box>
-            <form onSubmit={handleSubmit(data => {
-                data = lowerText(data);
-                addWords(data);
-            })} style={formStyle}>
-                <Box sx={inputContainerStyle}>
-                    <TextField
-                        error={!!errors.englishWord}
-                        sx={textFieldStyle}
-                        label={translation("english")}
-                        {...register("englishWord", {required: true})}
-                        InputLabelProps={{shrink: true}}
-                        helperText={errors.englishWord?.message}
-                        onChange={e => {
-                            setLoading(true);
-                            setTranslateEnglish(e.target.value);
+            <form
+                onSubmit={handleSubmit((data) => {
+                    data = lowerText(data);
+                    addWords(data);
+                })}
+                style={{margin: "0 auto"}}
+            >
+                <Box sx={modalContainerStyle}>
+                    <Box
+                        sx={{
+                            display: "flex",
+                            margin: translateEnglish ? "0 0 0 -35px" : "",
                         }}
-                    />
-                    <TextField
-                        error={!!errors.russianWord}
-                        sx={textFieldStyle}
-                        label={translation("russian")}
-                        {...register("russianWord", {required: true})}
-                        InputLabelProps={{shrink: true}}
-                        helperText={errors.russianWord?.message}
-                        onChange={e => {
-                            setLoading(true);
-                            setTranslateRussian(e.target.value);
-                        }}
-                    />
+                    >
+                        {translateEnglish ? (
+                            <Typography
+                                onClick={() => speakWord(translateEnglish)}
+                                sx={{margin: "15px 0 0 0", transform: "translate(-10px, 0)"}}
+                            >
+                                <VolumeUpIcon fontSize="large" color="primary"/>
+                            </Typography>
+                        ) : (
+                            ""
+                        )}
+
+                        <TextField
+                            error={!!errors.englishWord}
+                            sx={textFieldStyle}
+                            label={translation("english")}
+                            {...register("englishWord", {required: true})}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                            helperText={errors.englishWord?.message}
+                            onChange={(e) => {
+                                setLoading(true);
+                                setTranslateEnglish(e.target.value);
+                            }}
+                        />
+                    </Box>
+
+                    <Box>
+                        <TextField
+                            error={!!errors.russianWord}
+                            sx={textFieldStyle}
+                            label={translation("russian")}
+                            {...register("russianWord", {required: true})}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                            helperText={errors.russianWord?.message}
+                            onChange={(e) => {
+                                setLoading(true);
+                                setTranslateRussian(e.target.value);
+                            }}
+                        />
+                    </Box>
                 </Box>
 
-                <Box sx={translationContainerStyle}>
-                    {loading ? <CircularProgress sx={loadingStyle}/> : (
-                        <Box sx={speakerAndTranslationContainerStyle}>
-                            <IconButton onClick={() => speakWord(translatedText)}>
-                                {translatedText &&
-                                    <VolumeUpIcon fontSize="large" color="primary"/>}
-                            </IconButton>
-                            {translatedText && (
+                <Box sx={{display: "block", margin: "0 0 5px -15px"}}>
+                    <Box sx={{display: "flex", justifyContent: "center"}}>
+                        {statusLoading ? (
+                            <Box
+                                sx={{
+                                    transform: "translate(-50px, 20px)",
+                                }}
+                            >
+                                <CircularProgress/>
+                            </Box>
+                        ) : (
+                            ""
+                        )}
+                        <Box
+                            style={{
+                                margin: statusLoading ? "-5px 0 5px -25px" : "-5px 0 5px 15px",
+                                display: translateEnglish || translateRussian ? "" : "none",
+                            }}
+                        >
+                            <Typography sx={{textAlign: "center"}}>
+                                {translation("translation")}
+                            </Typography>
+
+                            {loading ? (
+                                <Box sx={loadingStyle}>
+                                    <CircularProgress/>
+                                </Box>
+                            ) : (
                                 <Box
-                                    sx={translatedBoxStyle}
+                                    sx={boxTranslationStyle}
                                     onClick={() => {
-                                        lang === "ru" ? setValue("russianWord", translatedText) : setValue("englishWord", translatedText);
+                                        lang === "ru"
+                                            ? setValue(
+                                                "russianWord",
+                                                translatedText
+                                            )
+                                            : setValue(
+                                                "englishWord",
+                                                translatedText
+                                            );
                                     }}
                                 >
-                                    <Typography lang={lang} sx={translateWordStyle}>
-                                        {translatedText[0] ? capitalize(translatedText) : ""}
-                                    </Typography>
+                                    {lang === "ru" ? (
+                                        <Typography lang={lang} sx={translateWord}>
+                                            {translatedText[0]
+                                                ? capitalize(translatedText)
+                                                : ""}
+                                        </Typography>
+                                    ) : (
+                                        <Typography lang="en" sx={translateWord}>
+                                            {translatedText[0]
+                                                ? capitalize(translatedText)
+                                                : ""}
+                                        </Typography>
+                                    )}
                                 </Box>
                             )}
                         </Box>
-                    )}
+                    </Box>
                 </Box>
 
-                <Button variant="contained" size="large" type="submit" sx={addStyle}>
+                <Button variant="outlined" size="medium" type="submit" sx={addStyle}>
                     {translation("addButton")}
                 </Button>
+
+
             </form>
         </>
     );
