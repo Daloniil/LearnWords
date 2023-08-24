@@ -186,7 +186,6 @@ const TestPage = () => {
         setPercent(
             percent - testWords[0].point < 0 ? 0 : percent - testWords[0].point
         );
-
         const recreate = recreateWords(
             testWords,
             wordsServer.englishWords,
