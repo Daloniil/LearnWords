@@ -38,7 +38,6 @@ import {useLanguage} from "../../hooks/useLanguage";
 import {setTranslation} from "../../utils/setTranslation";
 import {useLogin} from "../../hooks/useLogin";
 import {useWords} from "../../hooks/useWords";
-import {useAuth} from "../../hooks/useAuth";
 
 const EnterPage = () => {
     const {addNotification} = useNotification();
