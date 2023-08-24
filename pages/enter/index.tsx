@@ -21,16 +21,13 @@ import {
     translateWord,
 } from "../../Styles/EnterStyle";
 import {
-    LanguageKeys,
     LoginStatus,
     NotificationKeys,
-    WordsParams,
 } from "../../services/localKey";
 
 import {useEffect, useState} from "react";
 import {Translation} from "../../Interfaces/translation/translation";
 import {TranslationService} from "../../services/translationService";
-import {TranslationData} from "../../Interfaces/translation/translationResult";
 import {useDebounce} from "../../hooks/useDebounce";
 import {boxTranslationStyle, loadingStyle} from "../../Styles/TestStyle";
 import {enterTranslation} from "../../translation/Enter";
@@ -38,7 +35,6 @@ import {useLanguage} from "../../hooks/useLanguage";
 import {setTranslation} from "../../utils/setTranslation";
 import {useLogin} from "../../hooks/useLogin";
 import {useWords} from "../../hooks/useWords";
-import {useAuth} from "../../hooks/useAuth";
 
 const EnterPage = () => {
     const {addNotification} = useNotification();
