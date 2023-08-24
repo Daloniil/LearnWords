@@ -88,7 +88,7 @@ const DictionaryPage = () => {
 
 
     const searchingWord = () => {
-        const wordsArray = search(words, searchWord);
+        const wordsArray = search(wordsHook, searchWord);
         setWords(wordsArray);
     };
 
