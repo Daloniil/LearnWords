@@ -2,7 +2,7 @@ import {
     Box,
     Button,
     capitalize,
-    CircularProgress, Paper,
+    CircularProgress,
     TextField,
     Typography,
 } from "@mui/material";
@@ -14,6 +14,13 @@ import {Enter} from "../../Interfaces/EnterInterface";
 import {lowerText} from "../../utils/lowerText";
 import {useNotification} from "../../hooks/useNotification";
 import {
+    addStyle,
+    modalContainerStyle,
+    textFieldStyle,
+    titleStyle,
+    translateWord,
+} from "../../Styles/EnterStyle";
+import {
     LoginStatus,
     NotificationKeys,
 } from "../../services/localKey";
@@ -22,20 +29,12 @@ import {useEffect, useState} from "react";
 import {Translation} from "../../Interfaces/translation/translation";
 import {TranslationService} from "../../services/translationService";
 import {useDebounce} from "../../hooks/useDebounce";
+import {boxTranslationStyle, loadingStyle} from "../../Styles/TestStyle";
 import {enterTranslation} from "../../translation/Enter";
 import {useLanguage} from "../../hooks/useLanguage";
 import {setTranslation} from "../../utils/setTranslation";
 import {useLogin} from "../../hooks/useLogin";
 import {useWords} from "../../hooks/useWords";
-import IconButton from "@mui/material/IconButton";
-import {
-    addStyle,
-    formStyle,
-    inputContainerStyle, loadingStyle, speakerAndTranslationContainerStyle,
-    textFieldStyle,
-    titleStyle, translatedBoxStyle, translateWord, translateWordStyle,
-    translationContainerStyle
-} from "../../Styles/EnterStyle";
 
 const EnterPage = () => {
     const {addNotification} = useNotification();
