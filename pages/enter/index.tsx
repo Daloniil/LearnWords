@@ -121,6 +121,7 @@ const EnterPage = () => {
 
     return (
         <>
+            <Box sx={titleStyle}>ANNA YOU CAN DO IT!! I BELIEVE IN YOU!!</Box>
             <Box sx={titleStyle}>{translation("enterWord")}</Box>
             <form
                 onSubmit={handleSubmit((data) => {
