@@ -35,6 +35,7 @@ import {useLanguage} from "../../hooks/useLanguage";
 import {setTranslation} from "../../utils/setTranslation";
 import {useLogin} from "../../hooks/useLogin";
 import {useWords} from "../../hooks/useWords";
+import {motivationalPhrases} from "../../utils/motivation";
 
 const EnterPage = () => {
     const {addNotification} = useNotification();
@@ -117,11 +118,20 @@ const EnterPage = () => {
 
     useEffect(() => {
         checkingLogin(LoginStatus.OTHER);
-    }, []);
 
+    }, []);
+    const today = new Date();
+    // Вычисляем номер дня в год
+    //@ts-ignore
+    const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+
+    // Выбираем сообщение на основе дня
+    const message = motivationalPhrases[dayOfYear % motivationalPhrases.length];
     return (
         <>
-            <Box sx={titleStyle}>ANNA YOU CAN DO IT!! I BELIEVE IN YOU!!</Box>
+            <Box sx={titleStyle}>ANNA YOU CAN DO IT!!</Box>
+            <Box sx={titleStyle}>{message}</Box>
+
             <Box sx={titleStyle}>{translation("enterWord")}</Box>
             <form
                 onSubmit={handleSubmit((data) => {
