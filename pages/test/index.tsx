@@ -382,8 +382,7 @@ const TestPage = () => {
                     </Box>
                     <Box sx={statusBarStyle}>
                         <Typography sx={percentBarStyle}>
-                            Pay for Subscription
-                            {/*{Math.floor((percent / allPercent) * 100)}%*/}
+                            {Math.floor((percent / allPercent) * 100)}%
                         </Typography>
                         <LinearProgressWithLabel
                             value={Math.floor((percent / allPercent) * 100)}
