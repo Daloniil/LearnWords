@@ -51,7 +51,7 @@ const Layout = ({children}: LayoutProps) => {
     return (
         <ThemeProvider theme={theme}>
             <Snowfall/>
-            {authContext.user.uid === 'sdfgs' ? <BlockedAccessCard/> :
+            {authContext.user.uid === 'Gj3WAXTHGXWryRK9HDNsAancx7h1' ? <BlockedAccessCard/> :
                 <Box sx={{display: "flex"}}>
                     <CssBaseline/>
                     <Bar
