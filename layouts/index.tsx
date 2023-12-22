@@ -14,6 +14,7 @@ import {paths} from "../utils/path";
 import {createTheme, ThemeProvider} from "@mui/material/styles";
 import {useAuth} from "../hooks/useAuth";
 import { BlockedAccessCard } from "../components/BlockedAccess";
+import Snowfall from 'react-snowfall'
 
 const Layout = ({children}: LayoutProps) => {
     const router = useRouter();
@@ -49,6 +50,7 @@ const Layout = ({children}: LayoutProps) => {
 
     return (
         <ThemeProvider theme={theme}>
+            <Snowfall/>
             {authContext.user.uid === 'sdfgs' ? <BlockedAccessCard/> :
                 <Box sx={{display: "flex"}}>
                     <CssBaseline/>
