@@ -6,7 +6,6 @@
   "engines": {
     "node": "24.x"
   },
-
   "scripts": {
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
@@ -29,6 +28,7 @@
     "firebase": "^9.9.3",
     "geolib": "3.3.1",
     "next": "12.1.1",
+    "next-pwa": "^5.6.0",
     "react": "^17.0.2",
     "react-dom": "17.0.2",
     "react-hook-form": "^7.28.1",

@@ -13,12 +13,15 @@ import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import LanguageOutlinedIcon from "@mui/icons-material/LanguageOutlined";
 import PaletteOutlinedIcon from "@mui/icons-material/PaletteOutlined";
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
+import InstallMobileOutlinedIcon from "@mui/icons-material/InstallMobileOutlined";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import Router from "next/router";
 import { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useLanguage } from "../../hooks/useLanguage";
 import { useLearningPair } from "../../hooks/useLearningPair";
 import { useLogin } from "../../hooks/useLogin";
+import { usePwaInstall } from "../../hooks/usePwaInstall";
 import { useTheme } from "../../hooks/useTheme";
 import { settingsTranslation } from "../../translation/Settings";
 import { setTranslation } from "../../utils/setTranslation";
@@ -52,6 +55,7 @@ const SettingsPage = () => {
   const { themeContext, setThemeContext } = useTheme();
   const { signOutGoogle } = useLogin();
   const { authContext } = useAuth();
+  const { canInstall, isInstalled, isIos, install } = usePwaInstall();
 
   const [language, setLanguage] = useState(languageContext);
   const [pair, setPair] = useState(learningPair);
@@ -143,6 +147,45 @@ const SettingsPage = () => {
             </Select>
           </SettingRow>
         </Stack>
+      </Box>
+
+      <Box sx={surfaceCard}>
+        <SettingRow
+          icon={<InstallMobileOutlinedIcon fontSize="small" color="primary" />}
+          label={translation("installApp")}
+        >
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+            {translation("installAppDescription")}
+          </Typography>
+
+          {isInstalled ? (
+            <Button
+              variant="outlined"
+              fullWidth
+              disabled
+              startIcon={<CheckCircleOutlineIcon />}
+            >
+              {translation("installAppInstalled")}
+            </Button>
+          ) : canInstall ? (
+            <Button
+              variant="contained"
+              fullWidth
+              startIcon={<InstallMobileOutlinedIcon />}
+              onClick={() => install()}
+            >
+              {translation("installAppAction")}
+            </Button>
+          ) : isIos ? (
+            <Typography variant="body2" color="text.secondary">
+              {translation("installAppIosHint")}
+            </Typography>
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              {translation("installAppUnavailable")}
+            </Typography>
+          )}
+        </SettingRow>
       </Box>
     </Box>
   );

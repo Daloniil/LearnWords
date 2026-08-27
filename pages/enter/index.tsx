@@ -10,6 +10,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import ContentPasteIcon from "@mui/icons-material/ContentPaste";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
@@ -112,6 +113,27 @@ const EnterPage = () => {
     }
   };
 
+  const pasteFromClipboard = async () => {
+    if (!navigator.clipboard?.readText) {
+      addNotification("clipboardDenied", NotificationKeys.ERROR);
+      return;
+    }
+
+    try {
+      const text = (await navigator.clipboard.readText()).trim();
+      if (!text) {
+        addNotification("clipboardEmpty", NotificationKeys.ERROR);
+        return;
+      }
+
+      setValue("sourceWord", text, { shouldValidate: true, shouldDirty: true });
+      setLoading(true);
+      setTranslateSource(text);
+    } catch {
+      addNotification("clipboardDenied", NotificationKeys.ERROR);
+    }
+  };
+
   useEffect(() => {
     if (debouncedSearchValueSource) {
       handleTranslate([{ Text: debouncedSearchValueSource }], "source");
@@ -189,13 +211,24 @@ const EnterPage = () => {
       >
         <Stack spacing={2}>
           <Box sx={surfaceCard}>
-            <Typography
-              variant="caption"
-              color="primary"
-              sx={{ fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}
-            >
-              1 · {translation("stepSource")}
-            </Typography>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
+              <Typography
+                variant="caption"
+                color="primary"
+                sx={{ fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}
+              >
+                1 · {translation("stepSource")}
+              </Typography>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<ContentPasteIcon />}
+                onClick={pasteFromClipboard}
+                sx={{ flexShrink: 0 }}
+              >
+                {translation("pasteFromClipboard")}
+              </Button>
+            </Stack>
             <TextField
               fullWidth
               sx={{ mt: 1 }}

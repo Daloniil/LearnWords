@@ -54,4 +54,14 @@ export const notificationTranslation = [
     ru: "Папку успешно удалено",
     en: "Folder deleted successfully",
   },
+  {
+    title: "clipboardEmpty",
+    ru: "Буфер обмена пуст",
+    en: "Clipboard is empty",
+  },
+  {
+    title: "clipboardDenied",
+    ru: "Нет доступа к буферу обмена",
+    en: "Cannot access clipboard",
+  },
 ];

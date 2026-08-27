@@ -11,7 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearch } from "../../hooks/useSearch";
 import { Word } from "../../Interfaces/ProvidersInterface";
 import { EditWord } from "../../components/EditWord";
@@ -35,6 +35,8 @@ import {
   surfaceCard,
 } from "../../Styles/shared";
 
+const WORDS_PAGE_SIZE = 25;
+
 const DictionaryPage = () => {
   const { search } = useSearch();
   const { languageContext } = useLanguage();
@@ -53,14 +55,27 @@ const DictionaryPage = () => {
   const [moveWord, setMoveWord] = useState([] as Word[]);
   const [studyMode, setStudyMode] = useState(false);
   const [revealedIds, setRevealedIds] = useState<number[]>([]);
+  const [visibleCount, setVisibleCount] = useState(WORDS_PAGE_SIZE);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const words = useMemo(() => {
     if (!searchWord) return wordsHook;
     return search(wordsHook, searchWord);
   }, [wordsHook, searchWord, search]);
 
+  const visibleWords = useMemo(
+    () => words.slice(0, visibleCount),
+    [words, visibleCount]
+  );
+
+  const hasMoreWords = visibleWords.length < words.length;
+
   const translation = (key: string) =>
     setTranslation(key, dictionaryTranslation, languageContext);
+
+  const showingWordsLabel = translation("showingWords")
+    .replace("{shown}", String(visibleWords.length))
+    .replace("{total}", String(words.length));
 
   const resetSelection = () => {
     setSelectStatusComp(words.map(() => false));
@@ -120,8 +135,37 @@ const DictionaryPage = () => {
   }, [wordsHook]);
 
   useEffect(() => {
+    setVisibleCount(WORDS_PAGE_SIZE);
+  }, [searchWord, wordsHook, learningPair]);
+
+  useEffect(() => {
     checkingLogin(LoginStatus.OTHER);
   }, [learningPair]);
+
+  useEffect(() => {
+    const sentinel = loadMoreRef.current;
+    if (!sentinel || !hasMoreWords) return;
+
+    const scrollRoot = sentinel.closest("main");
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount((prev) =>
+            Math.min(prev + WORDS_PAGE_SIZE, words.length)
+          );
+        }
+      },
+      {
+        root: scrollRoot,
+        rootMargin: "120px",
+        threshold: 0,
+      }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMoreWords, words.length, visibleWords.length]);
 
   const showLoader = isLoading && words.length === 0;
 
@@ -209,24 +253,51 @@ const DictionaryPage = () => {
           }
         />
       ) : (
-        <Stack sx={scrollList}>
-          {words.map((item, index) => (
-            <WordCard
-              key={`${item.id}-${item.word}`}
-              word={item}
-              sourceLang={pairConfig.sourceLang}
-              targetLang={pairConfig.targetLang}
-              onPress={() => setWordModal(item)}
-              onSpeak={() => speakWord(item.word)}
-              selectable={selectStatus}
-              selected={selectStatusComp[index]}
-              onToggleSelect={() => clickSelectButton(index, item)}
-              blurTarget={studyMode}
-              targetRevealed={revealedIds.includes(item.id)}
-              onRevealTarget={() => revealTranslation(item.id)}
-              revealHint={translation("tapToReveal")}
-            />
-          ))}
+        <Stack spacing={1.5}>
+          <Stack sx={scrollList}>
+            {visibleWords.map((item, index) => (
+              <WordCard
+                key={`${item.id}-${item.word}`}
+                word={item}
+                sourceLang={pairConfig.sourceLang}
+                targetLang={pairConfig.targetLang}
+                onPress={() => setWordModal(item)}
+                onSpeak={() => speakWord(item.word)}
+                selectable={selectStatus}
+                selected={selectStatusComp[index]}
+                onToggleSelect={() => clickSelectButton(index, item)}
+                blurTarget={studyMode}
+                targetRevealed={revealedIds.includes(item.id)}
+                onRevealTarget={() => revealTranslation(item.id)}
+                revealHint={translation("tapToReveal")}
+              />
+            ))}
+          </Stack>
+
+          {hasMoreWords ? (
+            <Box
+              ref={loadMoreRef}
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                py: 2,
+                minHeight: 48,
+              }}
+            >
+              <CircularProgress size={22} />
+            </Box>
+          ) : words.length > WORDS_PAGE_SIZE ? (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              textAlign="center"
+              display="block"
+              sx={{ pb: 1 }}
+            >
+              {showingWordsLabel}
+            </Typography>
+          ) : null}
         </Stack>
       )}
 

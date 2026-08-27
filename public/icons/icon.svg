@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Learn Words">
+  <rect width="512" height="512" rx="112" fill="#1c54b2"/>
+  <path fill="#ffffff" d="M128 136h176c44 0 80 36 80 80v184c0-35-29-64-64-64H128V136z"/>
+  <path fill="#e3f2fd" d="M208 136h176v200c0 35-29 64-64 64H208V136z"/>
+  <path fill="#ffffff" d="M176 320h96v56h-96z"/>
+  <circle cx="336" cy="200" r="20" fill="#1c54b2"/>
+</svg>

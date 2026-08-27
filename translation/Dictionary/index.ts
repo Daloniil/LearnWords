@@ -49,4 +49,14 @@ export const dictionaryTranslation = [
     ru: "Нажмите, чтобы показать",
     en: "Tap to reveal",
   },
+  {
+    title: "loadMore",
+    ru: "Загрузить ещё",
+    en: "Load more",
+  },
+  {
+    title: "showingWords",
+    ru: "Показано {shown} из {total}",
+    en: "Showing {shown} of {total}",
+  },
 ];
