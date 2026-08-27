@@ -1,4 +1,4 @@
 export interface Enter {
-  englishWord: string;
-  russianWord: string;
+  sourceWord: string;
+  targetWord: string;
 }

@@ -4,53 +4,44 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
+import TranslateOutlinedIcon from "@mui/icons-material/TranslateOutlined";
 import { BarProps } from "../../Interfaces/BarInterface";
 import { useAuth } from "../../hooks/useAuth";
 
+const AppBar = styled(MuiAppBar)(({ theme }) => ({
+  zIndex: theme.zIndex.drawer + 1,
+  width: "100%",
+}));
+
 export const Bar = ({ title, setOpen }: BarProps) => {
-  const drawerWidth: number = 240;
   const { authContext } = useAuth();
 
-  const AppBar = styled(MuiAppBar)(({ theme }) => ({
-    zIndex: 1,
-    marginLeft: drawerWidth,
-    width: `100%`,
-    transition: theme.transitions.create(["width", "margin"], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
-    backgroundColor: "#1c54b2",
-  }));
-
   return (
-    <AppBar position="absolute">
-      <Toolbar>
-        {authContext.user && authContext.user.uid ? (
+    <AppBar position="fixed" color="primary">
+      <Toolbar sx={{ minHeight: { xs: 56, sm: 64 }, gap: 1 }}>
+        {authContext.user?.uid ? (
           <IconButton
             edge="start"
-            aria-label="open drawer"
+            color="inherit"
+            aria-label="open menu"
             onClick={() => setOpen(true)}
+            sx={{ display: { xs: "none", md: "inline-flex" } }}
           >
             <MenuIcon />
           </IconButton>
-        ) : (
-          ""
-        )}
+        ) : null}
+
+        <TranslateOutlinedIcon sx={{ display: { xs: "none", sm: "block" } }} />
 
         <Typography
           component="h1"
           variant="h6"
           color="inherit"
           noWrap
-          sx={{ flexGrow: 1 }}
+          sx={{ flexGrow: 1, fontWeight: 700 }}
         >
-          {title}
+          {title || "LearnWords"}
         </Typography>
-        <IconButton color="inherit">
-          <Typography variant="h6" color="inherit" component="div">
-            Word learning
-          </Typography>
-        </IconButton>
       </Toolbar>
     </AppBar>
   );

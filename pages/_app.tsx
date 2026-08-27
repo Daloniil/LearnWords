@@ -5,6 +5,7 @@ import Layout from "../layouts";
 import {NotificationProvider} from "../providers/NotificationProvider";
 import {Notification} from "../components/Notification";
 import {LanguageProvider} from "../providers/LanguageProvider";
+import {LearningPairProvider} from "../providers/LearningPairProvider";
 import {ThemeProviderContext} from "../providers/ThemeProvider";
 import {AuthProvider} from "../providers/AuthProvider";
 
@@ -12,17 +13,19 @@ const MyApp = ({Component, pageProps}: AppProps) => {
     return (
         <ThemeProviderContext>
             <LanguageProvider>
-                <NotificationProvider>
-                    <AuthProvider>
-                        <Layout>
-                            {
-                                // @ts-ignore
-                                <Component {...pageProps} />
-                            }
-                            <Notification/>
-                        </Layout>
-                    </AuthProvider>
-                </NotificationProvider>
+                <LearningPairProvider>
+                    <NotificationProvider>
+                        <AuthProvider>
+                            <Layout>
+                                {
+                                    // @ts-ignore
+                                    <Component {...pageProps} />
+                                }
+                                <Notification/>
+                            </Layout>
+                        </AuthProvider>
+                    </NotificationProvider>
+                </LearningPairProvider>
             </LanguageProvider>
         </ThemeProviderContext>
     );

@@ -1,24 +1,31 @@
 import { useStats } from "../../hooks/useStats";
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import Router from "next/router";
-import { Box, capitalize, CircularProgress, Typography } from "@mui/material";
+import {
+  Box,
+  capitalize,
+  CircularProgress,
+  IconButton,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { useLanguage } from "../../hooks/useLanguage";
 import { statsTranslation } from "../../translation/Stats";
 import { setTranslation } from "../../utils/setTranslation";
-
-import {
-  deleteButtonStyle,
-  elemStats,
-  indentsBoxStyle,
-  scrollStatsStyle,
-  statsBoxStyle,
-  statsTitleStyle,
-  titleTestStyle,
-} from "../../Styles/StatsStyle";
 import { useEffect, useState } from "react";
 import { LoginStatus } from "../../services/localKey";
 import { useLogin } from "../../hooks/useLogin";
 import { Stats } from "../../Interfaces/ProvidersInterface";
+import { PageHeader } from "../../components/PageHeader";
+import { EmptyState } from "../../components/EmptyState";
+import {
+  centeredLoader,
+  listCard,
+  pageStack,
+  scrollList,
+} from "../../Styles/shared";
+import { scrollStatsStyle } from "../../Styles/StatsStyle";
 
 const StatsPage = () => {
   const { languageContext } = useLanguage();
@@ -28,13 +35,11 @@ const StatsPage = () => {
   const [stats, setStats] = useState([] as Stats[]);
   const [statusLoading, setStatusLoading] = useState(false);
 
-  const translation = (key: string) => {
-    return setTranslation(key, statsTranslation, languageContext);
-  };
+  const translation = (key: string) =>
+    setTranslation(key, statsTranslation, languageContext);
 
   useEffect(() => {
-    //@ts-ignore
-    setStats(statsHook);
+    setStats(statsHook ?? []);
     setStatusLoading(false);
   }, [statsHook]);
 
@@ -43,59 +48,72 @@ const StatsPage = () => {
     getStats();
     checkingLogin(LoginStatus.OTHER);
   }, []);
+
   return (
-    <>
-      <Typography sx={statsTitleStyle}>{translation("titleStats")}</Typography>
+    <Box sx={pageStack}>
+      <PageHeader title={translation("titleStats")} />
+
       {statusLoading ? (
-        <CircularProgress
-          sx={{
-            minWidth: "100px",
-            minHeight: "100px",
-            margin: "25px auto 25px auto",
-          }}
+        <Box sx={centeredLoader}>
+          <CircularProgress />
+        </Box>
+      ) : stats.length === 0 ? (
+        <EmptyState
+          title={
+            languageContext === "english"
+              ? "No stats yet"
+              : "Статистики пока нет"
+          }
+          description={
+            languageContext === "english"
+              ? "Complete a test to see your mistakes here"
+              : "Пройдите тест, чтобы увидеть ошибки"
+          }
         />
       ) : (
-        <Box sx={scrollStatsStyle}>
+        <Stack sx={{ ...scrollStatsStyle, ...scrollList }}>
           {stats.map((stat) => (
-            <Box key={stat.id} sx={statsBoxStyle}>
-              <Typography
-                sx={deleteButtonStyle}
-                onClick={() => deleteStats(stat.id)}
-                color={"error"}
-              >
-                <DeleteForeverIcon />
-              </Typography>
-              <Box
-                sx={indentsBoxStyle}
-                onClick={() => Router.push(`/stats/${stat.id}`)}
-              >
-                <Typography sx={titleTestStyle}>
-                  {translation("test")} №{stat.id + 1}
-                </Typography>
-
-                <Typography sx={elemStats} lang="ru">
-                  {stat.stat[0]
-                    ? `     1. ${capitalize(stat.stat[0].word)}
-                - 
-                ${capitalize(stat.stat[0].translation)}`
-                    : `${translation("noErrors")}`}
-                </Typography>
-
-                {stat.stat[1] ? (
-                  <Typography sx={elemStats} lang="ru">
-                    2. {capitalize(stat.stat[1].word)}
-                    {""} - {""}
-                    {capitalize(stat.stat[1].translation)}
+            <Box key={stat.id} sx={listCard}>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Box
+                  sx={{ flex: 1, minWidth: 0, cursor: "pointer" }}
+                  onClick={() => Router.push(`/stats/${stat.id}`)}
+                >
+                  <Typography sx={{ fontWeight: 700, mb: 0.5 }}>
+                    {translation("test")} №{stat.id + 1}
                   </Typography>
-                ) : (
-                  ""
-                )}
-              </Box>
+                  {stat.stat[0] ? (
+                    <Typography variant="body2" color="text.secondary">
+                      1. {capitalize(stat.stat[0].word)} —{" "}
+                      {capitalize(stat.stat[0].translation)}
+                    </Typography>
+                  ) : (
+                    <Typography variant="body2" color="success.main">
+                      {translation("noErrors")}
+                    </Typography>
+                  )}
+                  {stat.stat[1] ? (
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                      2. {capitalize(stat.stat[1].word)} —{" "}
+                      {capitalize(stat.stat[1].translation)}
+                    </Typography>
+                  ) : null}
+                </Box>
+                <IconButton
+                  color="error"
+                  size="small"
+                  onClick={() => deleteStats(stat.id)}
+                  aria-label="delete stat"
+                >
+                  <DeleteOutlineIcon />
+                </IconButton>
+                <ChevronRightIcon color="disabled" />
+              </Stack>
             </Box>
           ))}
-        </Box>
+        </Stack>
       )}
-    </>
+    </Box>
   );
 };
 

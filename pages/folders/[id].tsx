@@ -1,44 +1,40 @@
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import Router from "next/router";
 import {
   Box,
   capitalize,
   CircularProgress,
+  IconButton,
+  InputAdornment,
   Modal,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
+  Stack,
   TextField,
   Typography,
 } from "@mui/material";
-import Router, { useRouter } from "next/router";
+import SearchIcon from "@mui/icons-material/Search";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useFolders } from "../../hooks/useFolders";
 import { useLanguage } from "../../hooks/useLanguage";
+import { useLearningPair } from "../../hooks/useLearningPair";
+import { getWordArrays } from "../../utils/wordHelpers";
 import { useLogin } from "../../hooks/useLogin";
 import { Word } from "../../Interfaces/ProvidersInterface";
 import { LoginStatus } from "../../services/localKey";
-import {
-  circularProgressDictionary,
-  modalStyle,
-  rowStyle,
-  rowStyleDark,
-  searchStyle,
-  tableCellStyle,
-  titleWordsStyle,
-  wordsStyle,
-} from "../../Styles/DictionaryStyle";
 import { dictionaryTranslation } from "../../translation/Dictionary";
 import { setTranslation } from "../../utils/setTranslation";
-import SearchIcon from "@mui/icons-material/Search";
-import VolumeUpIcon from "@mui/icons-material/VolumeUp";
-import { useTheme } from "../../hooks/useTheme";
-import { useWords } from "../../hooks/useWords";
 import { useSearch } from "../../hooks/useSearch";
+import { useWords } from "../../hooks/useWords";
 import { EditWord } from "../../components/EditWord";
-import { titleFolder } from "../../Styles/FoldersStyle";
+import { WordCard } from "../../components/WordCard";
+import { AppModal } from "../../components/AppModal";
+import { EmptyState } from "../../components/EmptyState";
+import {
+  centeredLoader,
+  pageStack,
+  scrollList,
+  surfaceCard,
+} from "../../Styles/shared";
 
 const FolderPage = () => {
   const router = useRouter();
@@ -46,92 +42,122 @@ const FolderPage = () => {
   const { checkingLogin } = useLogin();
   const { getFolders, foldersHook } = useFolders();
   const { languageContext } = useLanguage();
-  const { themeContext } = useTheme();
+  const { learningPair, pairConfig } = useLearningPair();
   const { speakWord } = useWords();
 
   const [folderName, setFolderName] = useState("");
   const [folderId, setFolderId] = useState(0);
+  const [allFolderWords, setAllFolderWords] = useState([] as Word[]);
   const [folderWord, setFolderWord] = useState([] as Word[]);
   const [searchWord, setSearchWord] = useState("");
   const [statusLoading, setStatusLoadingUser] = useState(false);
-  const [windowHeight, setWindowHeight] = useState(550);
   const [editId, setEditId] = useState(0);
   const [editWord, setEditWord] = useState({} as Word);
   const [openModalEdit, setOpenModalEdit] = useState(false);
 
+  const translation = (key: string) =>
+    setTranslation(key, dictionaryTranslation, languageContext);
+
   const handleCloseModalEdit = () => {
-    setOpenModalEdit(!openModalEdit);
-    setTimeout(() => {
-      getFolders();
-    }, 500);
-  };
-
-  const translation = (key: string) => {
-    return setTranslation(key, dictionaryTranslation, languageContext);
-  };
-
-  const textFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchWord(e.target.value.toLowerCase());
-  };
-
-  const searchingWord = () => {
-    const wordsArray = search(folderWord, searchWord);
-    setFolderWord(wordsArray);
+    setOpenModalEdit(false);
+    setTimeout(() => getFolders(), 500);
   };
 
   const setWordModal = (word: Word) => {
-    handleCloseModalEdit();
     setEditWord(word);
     setEditId(word.id);
+    setOpenModalEdit(true);
   };
 
   useEffect(() => {
     if (searchWord) {
-      searchingWord();
+      setFolderWord(search(allFolderWords, searchWord));
     } else {
-      getFolders();
-      setStatusLoadingUser(true);
+      setFolderWord(allFolderWords);
     }
-  }, [searchWord]);
+  }, [searchWord, allFolderWords]);
 
   useEffect(() => {
-    if (foldersHook && foldersHook.length > 0) {
-      const folderInfo =
-        foldersHook[
-          foldersHook.map((id) => id.id).indexOf(Number(router.query.id))
-        ];
+    if (foldersHook?.length > 0) {
+      const folderInfo = foldersHook.find(
+        (f) => f.id === Number(router.query.id)
+      );
       if (folderInfo) {
         setFolderId(folderInfo.id);
-        setFolderWord(folderInfo.englishWords);
+        const { sourceWords } = getWordArrays(folderInfo, pairConfig);
+        setAllFolderWords(sourceWords);
+        setFolderWord(sourceWords);
         setFolderName(folderInfo.name);
-        setWindowHeight(window.outerHeight);
         setStatusLoadingUser(false);
       } else {
         Router.push("/folders");
       }
     }
-  }, [foldersHook]);
+  }, [foldersHook, learningPair]);
 
   useEffect(() => {
     checkingLogin(LoginStatus.OTHER);
     getFolders();
     setStatusLoadingUser(true);
-  }, []);
+  }, [learningPair]);
 
   return (
-    <>
-      <Modal
-        open={openModalEdit}
-        onClose={handleCloseModalEdit}
-        aria-labelledby="simple-modal-title"
-        aria-describedby="simple-modal-description"
-      >
-        <Box
-          sx={modalStyle}
-          style={{
-            backgroundColor: themeContext === "dark" ? "#232323" : "white",
+    <Box sx={pageStack}>
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Typography variant="h6" sx={{ fontWeight: 700 }}>
+          {folderName}
+        </Typography>
+        <IconButton onClick={() => Router.push("/folders")} aria-label="back">
+          <ArrowBackIcon />
+        </IconButton>
+      </Stack>
+
+      <Box sx={surfaceCard}>
+        <TextField
+          fullWidth
+          size="small"
+          placeholder={translation("searchWord")}
+          value={searchWord}
+          onChange={(e) => setSearchWord(e.target.value.toLowerCase())}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" />
+              </InputAdornment>
+            ),
           }}
-        >
+        />
+      </Box>
+
+      {statusLoading ? (
+        <Box sx={centeredLoader}>
+          <CircularProgress />
+        </Box>
+      ) : folderWord.length === 0 ? (
+        <EmptyState
+          title={
+            languageContext === "english"
+              ? "Folder is empty"
+              : "Папка пуста"
+          }
+        />
+      ) : (
+        <Stack sx={scrollList}>
+          {folderWord.map((item) => (
+            <WordCard
+              key={item.id}
+              word={item}
+              sourceLang={pairConfig.sourceLang}
+              targetLang={pairConfig.targetLang}
+              onPress={() => setWordModal(item)}
+              onSpeak={() => speakWord(item.word)}
+            />
+          ))}
+        </Stack>
+      )}
+
+      <Modal open={openModalEdit} onClose={handleCloseModalEdit}>
+        <AppModal>
           <EditWord
             folderId={folderId}
             editId={editId}
@@ -139,85 +165,9 @@ const FolderPage = () => {
             handleCloseModal={handleCloseModalEdit}
             setStatusLoadingUser={setStatusLoadingUser}
           />
-        </Box>
+        </AppModal>
       </Modal>
-
-      <Typography sx={titleFolder}>{folderName}</Typography>
-      <TextField
-        hiddenLabel
-        id="filled-hidden-label-small"
-        variant="filled"
-        size="small"
-        placeholder={translation("searchWord")}
-        sx={searchStyle}
-        onChange={textFieldChange}
-        InputProps={{
-          endAdornment: <SearchIcon />,
-        }}
-      />
-
-      <Paper sx={{ overflow: "hidden" }}>
-        <TableContainer
-          sx={{ maxHeight: (windowHeight / 100) * 63, margin: "0 0 0 0" }}
-        >
-          <Table stickyHeader aria-label="sticky table">
-            <TableHead>
-              <TableRow>
-                <TableCell>
-                  <Typography sx={titleWordsStyle}>
-                    {translation("english")}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography sx={titleWordsStyle}>
-                    {translation("russian")}
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            {statusLoading ? (
-              <CircularProgress sx={circularProgressDictionary} />
-            ) : (
-              <TableBody>
-                {folderWord.map((item, index) => (
-                  <TableRow
-                    key={index}
-                    onClick={() => {
-                      setWordModal(item);
-                    }}
-                    sx={themeContext === "dark" ? rowStyleDark : rowStyle}
-                  >
-                    <TableCell sx={{ maxWidth: "150px" }}>
-                      <Typography sx={tableCellStyle}>
-                        <Typography
-                          onClick={(e) => {
-                            e.stopPropagation(), speakWord(item.word);
-                          }}
-                          sx={{ margin: "3px 0 0 0" }}
-                        >
-                          <VolumeUpIcon fontSize="medium" color="primary" />
-                        </Typography>
-                        <Typography lang="en" sx={wordsStyle}>
-                          {capitalize(item.word)}
-                        </Typography>
-                      </Typography>
-                    </TableCell>
-                    <TableCell
-                      onClick={handleCloseModalEdit}
-                      sx={{ maxWidth: "150px" }}
-                    >
-                      <Typography lang="ru" sx={wordsStyle}>
-                        {capitalize(item.correctTranslation)}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            )}
-          </Table>
-        </TableContainer>
-      </Paper>
-    </>
+    </Box>
   );
 };
 

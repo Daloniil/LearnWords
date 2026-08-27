@@ -4,12 +4,29 @@ import Router from "next/router";
 import { useState } from "react";
 import { FoldersType, Word } from "../Interfaces/ProvidersInterface";
 import { Enter } from "../Interfaces/EnterInterface";
-import { ContextKey, NotificationKeys } from "../services/localKey";
+import { NotificationKeys } from "../services/localKey";
+import {
+  createEmptyFolder,
+  createEmptyFoldersDoc,
+  findFolderInDoc,
+  foldersDocChanged,
+  getFoldersFromDoc,
+  normalizeFoldersDoc,
+  persistFoldersDoc,
+} from "../utils/learningPair";
+import {
+  buildWordPair,
+  ensureWordArrays,
+  getWordArrays,
+  isDuplicateOnEdit,
+} from "../utils/wordHelpers";
+import { useLearningPair } from "./useLearningPair";
 import { useNotification } from "./useNotification";
 
 export const useFolders = () => {
   const { authContext } = useAuth();
   const { addNotification } = useNotification();
+  const { pairConfig } = useLearningPair();
 
   const [foldersHook, setFoldersHook] = useState([] as FoldersType[]);
 
@@ -20,25 +37,21 @@ export const useFolders = () => {
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        const arr = docSnap.data().folders;
-        const repeating = [];
-        arr.forEach((folder: any) => {
-          if (folder.name === nameFolder) {
-            repeating.push(folder.name);
-          }
-        });
-        if (repeating.length >= 1) {
+        const data = normalizeFoldersDoc(docSnap.data());
+        const arr = getFoldersFromDoc(data, pairConfig);
+        const repeating = arr.some((folder) => folder.name === nameFolder);
+
+        if (repeating) {
           addNotification(`sameFolder`, NotificationKeys.ERROR);
         } else {
-          const newFolder = {
-            id: arr.length ? arr[arr.length - 1].id + 1 : 1,
-            name: nameFolder,
-            englishWords: [],
-            russianWords: [],
-          };
+          const newFolder = createEmptyFolder(
+            arr.length ? arr[arr.length - 1].id + 1 : 1,
+            nameFolder,
+            pairConfig.pair
+          );
           arr.push(newFolder);
 
-          setDoc(docRef, { folders: arr });
+          setDoc(docRef, persistFoldersDoc(data, pairConfig, arr));
           addNotification("addFolder", NotificationKeys.SUCCESS);
           return;
         }
@@ -52,17 +65,16 @@ export const useFolders = () => {
       const docRef = doc(db, "folders", authContext.user.uid);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        setFoldersHook(docSnap.data().folders);
-      } else {
-        const db = getFirestore();
-        const collectionId = "folders";
-        const documentId = authContext.user.uid;
+        const raw = docSnap.data();
+        const data = normalizeFoldersDoc(raw);
+        const folders = getFoldersFromDoc(data, pairConfig);
+        setFoldersHook(folders);
 
-        const value = {
-          folders: [],
-          uid: authContext.user.uid,
-        };
-        setDoc(doc(db, collectionId, documentId), value);
+        if (foldersDocChanged(raw, data)) {
+          setDoc(docRef, data);
+        }
+      } else {
+        setDoc(doc(db, "folders", authContext.user.uid), createEmptyFoldersDoc(authContext.user.uid));
         Router.push("/enter");
       }
     }
@@ -75,13 +87,13 @@ export const useFolders = () => {
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        let arr = docSnap.data().folders;
-
-        const index = arr.map((id: FoldersType) => id.id).indexOf(id);
+        const data = normalizeFoldersDoc(docSnap.data());
+        const arr = getFoldersFromDoc(data, pairConfig);
+        const index = arr.map((item) => item.id).indexOf(id);
 
         arr.splice(index, 1);
 
-        setDoc(docRef, { folders: arr });
+        setDoc(docRef, persistFoldersDoc(data, pairConfig, arr));
         addNotification("folderDelete", NotificationKeys.SUCCESS);
         setTimeout(() => {
           getFolders();
@@ -97,20 +109,21 @@ export const useFolders = () => {
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        const folder = docSnap.data();
-        let arr = folder.folders.find((idFol: any) => idFol.id === id);
+        const folder = normalizeFoldersDoc(docSnap.data());
+        const folderItem = findFolderInDoc(folder, id, pairConfig);
 
-        const wordsEnglish = arr.englishWords as Word[];
-        const wordsRussian = arr.russianWords as Word[];
+        if (!folderItem) return;
+
+        ensureWordArrays(folderItem, pairConfig);
+        const { sourceWords, targetWords } = getWordArrays(
+          folderItem,
+          pairConfig
+        );
 
         let repeatingWord = "These words are already in the folder: ";
 
-        const findWords = (data: Word) => {
-          return wordsEnglish.find((item) => item.word === data.word);
-        };
-
         data.forEach((word) => {
-          if (findWords(word)) {
+          if (sourceWords.find((item) => item.word === word.word)) {
             repeatingWord = repeatingWord + ` ${word.word},`;
           }
         });
@@ -119,21 +132,18 @@ export const useFolders = () => {
           addNotification(`${repeatingWord}`, NotificationKeys.ERROR);
         } else {
           data.forEach((word) => {
-            const newEnglishWord = {
-              id: word.id,
-              word: word.word,
-              correctTranslation: word.correctTranslation,
-              point: word.point,
-            };
-            const newRussianWord = {
-              id: word.id,
-              word: word.correctTranslation,
-              correctTranslation: word.word,
-              point: word.point,
-            };
-            wordsEnglish.push(newEnglishWord);
-            wordsRussian.push(newRussianWord);
+            const { sourceWord, targetWord } = buildWordPair(word.id, {
+              sourceWord: word.word,
+              targetWord: word.correctTranslation,
+            });
+            sourceWord.point = word.point;
+            targetWord.point = word.point;
+            sourceWords.push(sourceWord);
+            targetWords.push(targetWord);
           });
+
+          folderItem[pairConfig.sourceKey] = sourceWords;
+          folderItem[pairConfig.targetKey] = targetWords;
 
           addNotification("wordAdd", NotificationKeys.SUCCESS);
           setDoc(docRef, folder);
@@ -150,23 +160,27 @@ export const useFolders = () => {
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        const folder = docSnap.data();
-        let arr = folder.folders.find((idFol: any) => idFol.id === idFolder);
+        const folder = normalizeFoldersDoc(docSnap.data());
+        const folderItem = findFolderInDoc(folder, idFolder, pairConfig);
 
-        const wordsEnglish = arr.englishWords as Word[];
-        const wordsRussian = arr.russianWords as Word[];
+        if (!folderItem) return;
 
-        const indexEnglish = wordsEnglish
-          .map((id: Word) => id.id)
-          .indexOf(idWord);
+        const { sourceWords, targetWords } = getWordArrays(
+          folderItem,
+          pairConfig
+        );
 
-        wordsEnglish.splice(indexEnglish, 1);
+        sourceWords.splice(
+          sourceWords.map((item) => item.id).indexOf(idWord),
+          1
+        );
+        targetWords.splice(
+          targetWords.map((item) => item.id).indexOf(idWord),
+          1
+        );
 
-        const indexRussian = wordsRussian
-          .map((id: Word) => id.id)
-          .indexOf(idWord);
-
-        wordsRussian.splice(indexRussian, 1);
+        folderItem[pairConfig.sourceKey] = sourceWords;
+        folderItem[pairConfig.targetKey] = targetWords;
 
         setDoc(docRef, folder);
         addNotification("wordDelete", NotificationKeys.SUCCESS);
@@ -175,18 +189,7 @@ export const useFolders = () => {
   };
 
   const updateWords = async (idFolder: number, idWord: number, data: Enter) => {
-    const newEnglishWord = {
-      id: idWord,
-      word: data.englishWord,
-      correctTranslation: data.russianWord,
-      point: 0,
-    };
-    const newRussianWord = {
-      id: idWord,
-      word: data.russianWord,
-      correctTranslation: data.englishWord,
-      point: 0,
-    };
+    const { sourceWord, targetWord } = buildWordPair(idWord, data);
 
     if (authContext.user) {
       const db = getFirestore();
@@ -194,46 +197,34 @@ export const useFolders = () => {
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        const folder = docSnap.data();
-        let arr = folder.folders.find((idFol: any) => idFol.id === idFolder);
+        const folder = normalizeFoldersDoc(docSnap.data());
+        const folderItem = findFolderInDoc(folder, idFolder, pairConfig);
 
-        const wordsEnglish = arr.englishWords as Word[];
-        const wordsRussian = arr.russianWords as Word[];
+        if (!folderItem) return;
 
-        const keys = [ContextKey.ENGLISH, ContextKey.RUSSIAN];
-        const repeatingWord = [] as string[];
+        ensureWordArrays(folderItem, pairConfig);
+        const { sourceWords, targetWords } = getWordArrays(
+          folderItem,
+          pairConfig
+        );
 
-        const findWords = (data: Enter, key: string) => {
-          if (key === ContextKey.ENGLISH) {
-            return wordsEnglish.find((item) => item.word === data.englishWord);
-          }
-          return wordsRussian.find((item) => item.word === data.russianWord);
-        };
-
-        keys.forEach((lang) => {
-          if (findWords(data, lang)) {
-            repeatingWord.push(lang);
-          }
-        });
-
-        if (repeatingWord.length > 1) {
+        if (isDuplicateOnEdit(data, sourceWords, targetWords, idWord)) {
           addNotification("hasAlready", NotificationKeys.ERROR);
           return;
-        } else {
-          const indexEnglish = wordsEnglish
-            .map((id: Word) => id.id)
-            .indexOf(newEnglishWord.id);
-          wordsEnglish[indexEnglish] = newEnglishWord;
-
-          const indexRussian = wordsRussian
-            .map((id: Word) => id.id)
-            .indexOf(newRussianWord.id);
-          wordsRussian[indexRussian] = newRussianWord;
-
-          setDoc(docRef, folder);
-          addNotification("wordEdit", NotificationKeys.SUCCESS);
-          return;
         }
+
+        sourceWords[
+          sourceWords.map((item) => item.id).indexOf(sourceWord.id)
+        ] = sourceWord;
+        targetWords[
+          targetWords.map((item) => item.id).indexOf(targetWord.id)
+        ] = targetWord;
+
+        folderItem[pairConfig.sourceKey] = sourceWords;
+        folderItem[pairConfig.targetKey] = targetWords;
+
+        setDoc(docRef, folder);
+        addNotification("wordEdit", NotificationKeys.SUCCESS);
       }
     }
   };

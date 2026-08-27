@@ -1,17 +1,12 @@
 import { yupResolver } from "@hookform/resolvers/yup";
-import { Box, Button, TextField, Typography } from "@mui/material";
+import { Box, Button, Stack, TextField, Typography } from "@mui/material";
 import { useFolders } from "../../hooks/useFolders";
-import {
-  buttonStyle,
-  textFieldStyle,
-  titleStyle,
-} from "../../Styles/EditWordStyle";
-
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import { folderTranslation } from "../../translation/Folder";
 import { useLanguage } from "../../hooks/useLanguage";
 import { setTranslation } from "../../utils/setTranslation";
+import { fullWidthButton } from "../../Styles/shared";
 
 const emptyField = "This Field Cannot Be Empty";
 
@@ -33,54 +28,42 @@ export const AddFolder = ({
     reset,
     formState: { errors },
   } = useForm<{ nameFolder: string }>({
-    defaultValues: {
-      nameFolder: "",
-    },
+    defaultValues: { nameFolder: "" },
     resolver: yupResolver(schema),
   });
 
-  const updateModal = () => {
-    setTimeout(() => {
-      reset({
-        nameFolder: "",
-      });
-      handleCloseModal();
-    }, 500);
-  };
-
-  const translation = (key: string) => {
-    return setTranslation(key, folderTranslation, languageContext);
-  };
+  const translation = (key: string) =>
+    setTranslation(key, folderTranslation, languageContext);
 
   const addFolder = (nameFolder: string) => {
     createFolder(nameFolder);
-    updateModal();
+    reset({ nameFolder: "" });
+    handleCloseModal();
   };
 
   return (
-    <>
-      <Typography sx={titleStyle}>{translation("addFolder")}</Typography>
-      <form
-        onSubmit={handleSubmit((data) => {
-          addFolder(data.nameFolder);
-        })}
+    <Box>
+      <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+        {translation("addFolder")}
+      </Typography>
+      <Box
+        component="form"
+        onSubmit={handleSubmit((data) => addFolder(data.nameFolder))}
       >
-        <Box sx={{ margin: "10px 0 0 0" }}>
+        <Stack spacing={2}>
           <TextField
+            fullWidth
+            autoFocus
             error={!!errors.nameFolder}
-            label={"Name Folder"}
-            sx={textFieldStyle}
+            label={languageContext === "english" ? "Folder name" : "Название папки"}
             {...register("nameFolder", { required: true })}
-            InputLabelProps={{
-              shrink: true,
-            }}
             helperText={errors.nameFolder?.message}
           />
-        </Box>
-        <Button variant="outlined" size="medium" sx={buttonStyle} type="submit">
-          {translation("add")}
-        </Button>
-      </form>
-    </>
+          <Button variant="contained" type="submit" sx={fullWidthButton}>
+            {translation("add")}
+          </Button>
+        </Stack>
+      </Box>
+    </Box>
   );
 };

@@ -21,8 +21,8 @@ export enum LanguageKeys {
 export enum StatusFind {
   OPTIONS = "options",
   LANG = "lang",
-  EN = "EN",
-  RU = "RU",
+  SOURCE = "source",
+  TARGET = "target",
 }
 
 export enum ColorKeys {
@@ -32,6 +32,7 @@ export enum ColorKeys {
 
 export enum ContextKey {
   LANGUAGE = "app-language",
+  LEARNING_PAIR = "app-learning-pair",
   ENGLISH = "app-english",
   RUSSIAN = "app-russian",
   THEME = "app-theme",

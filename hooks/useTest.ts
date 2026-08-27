@@ -16,9 +16,10 @@ export const useTest = () => {
         }
         return indices;
     };
-    const findLang = (word: Word, englishWords: Word[]) => {
+
+    const findLang = (word: Word, sourceWords: Word[]) => {
         if (
-            englishWords.find(
+            sourceWords.find(
                 (item) => item.correctTranslation === word.correctTranslation
             )
         ) {
@@ -30,27 +31,27 @@ export const useTest = () => {
     const findLangWord = (
         correctWord: string,
         status: string,
-        englishWords: Word[],
-        russianWords: Word[]
+        sourceWords: Word[],
+        targetWords: Word[]
     ) => {
-        if (englishWords.find((item) => item.correctTranslation === correctWord)) {
-            return status === StatusFind.OPTIONS ? englishWords : StatusFind.EN;
+        if (sourceWords.find((item) => item.correctTranslation === correctWord)) {
+            return status === StatusFind.OPTIONS ? sourceWords : StatusFind.SOURCE;
         }
-        return status === StatusFind.OPTIONS ? russianWords : StatusFind.RU;
+        return status === StatusFind.OPTIONS ? targetWords : StatusFind.TARGET;
     };
 
     const createVariantsWord = (
         testWords: string,
-        englishWords: Word[],
-        russianWords: Word[]
+        sourceWords: Word[],
+        targetWords: Word[]
     ) => {
         const correctWord = testWords;
         const options = [correctWord];
         const optionsWord = findLangWord(
             correctWord,
             StatusFind.OPTIONS,
-            englishWords,
-            russianWords
+            sourceWords,
+            targetWords
         );
 
         if (typeof optionsWord !== "string") {
@@ -63,15 +64,15 @@ export const useTest = () => {
 
     const recreateWords = (
         testWords: Word[],
-        englishWords: Word[],
-        russianWords: Word[]
+        sourceWords: Word[],
+        targetWords: Word[]
     ) => {
         const selectWord = testWords[0];
         const selectLang = findLangWord(
             selectWord.word,
             StatusFind.LANG,
-            englishWords,
-            russianWords
+            sourceWords,
+            targetWords
         );
         const addWords = [];
 
@@ -89,7 +90,7 @@ export const useTest = () => {
             point: 0,
         };
 
-        if (selectLang === StatusFind.EN) {
+        if (selectLang === StatusFind.SOURCE) {
             addWords.push(newWord, newWord, newCorrectTranslation);
         } else {
             addWords.push(newCorrectTranslation, newWord, newCorrectTranslation);
@@ -113,7 +114,6 @@ export const useTest = () => {
         correctSelectWord: string,
         item: string
     ) => {
-        console.log(correctSelectWord, errorSelectWord, item)
         if (correctSelectWord === item) {
             return ColorKeys.GREEN;
         } else if (errorSelectWord === item) {
@@ -143,7 +143,7 @@ export const useTest = () => {
     };
 
     const clearPoint = (testWords: Word[]) => {
-        testWords.forEach((item: Word) => {
+        testWords.forEach((item) => {
             item.point = 0;
         });
         return testWords;

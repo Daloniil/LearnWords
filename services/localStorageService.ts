@@ -20,6 +20,11 @@ export class LocalStorageService {
     storage.setItem(ContextKey.LANGUAGE, JSON.stringify(value));
   }
 
+  public static setLearningPair(value: string, session = false) {
+    const storage = session ? sessionStorage : localStorage;
+    storage.setItem(ContextKey.LEARNING_PAIR, JSON.stringify(value));
+  }
+
   public static setTheme(theme: string, key: ItemType, session = false) {
     const storage = session ? sessionStorage : localStorage;
     storage.setItem(key, JSON.stringify(theme));

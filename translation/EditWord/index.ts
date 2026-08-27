@@ -6,8 +6,13 @@ export const editWordTranslation = [
   },
   {
     title: "english",
-    ru: "Англиський",
+    ru: "Английский",
     en: "English",
+  },
+  {
+    title: "spanish",
+    ru: "Испанский",
+    en: "Spanish",
   },
   {
     title: "editWord",

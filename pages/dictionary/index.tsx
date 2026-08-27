@@ -1,314 +1,264 @@
 import {
-    Box,
-    Button,
-    capitalize,
-    CircularProgress,
-    Modal,
-    Paper,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    TextField,
-    Typography,
+  Box,
+  Button,
+  CircularProgress,
+  FormControlLabel,
+  InputAdornment,
+  Modal,
+  Stack,
+  Switch,
+  TextField,
+  Typography,
 } from "@mui/material";
-import VolumeUpIcon from "@mui/icons-material/VolumeUp";
-
 import SearchIcon from "@mui/icons-material/Search";
-import {useEffect, useState} from "react";
-import {useSearch} from "../../hooks/useSearch";
-import {Word} from "../../Interfaces/ProvidersInterface";
+import { useEffect, useState } from "react";
+import { useSearch } from "../../hooks/useSearch";
+import { Word } from "../../Interfaces/ProvidersInterface";
+import { EditWord } from "../../components/EditWord";
+import { useLanguage } from "../../hooks/useLanguage";
+import { useLearningPair } from "../../hooks/useLearningPair";
+import { dictionaryTranslation } from "../../translation/Dictionary";
+import { setTranslation } from "../../utils/setTranslation";
+import { LoginStatus, NotificationKeys } from "../../services/localKey";
+import { useLogin } from "../../hooks/useLogin";
+import { useWords } from "../../hooks/useWords";
+import { AddToFolder } from "../../components/AddToFolder";
+import { useNotification } from "../../hooks/useNotification";
+import { PageHeader } from "../../components/PageHeader";
+import { EmptyState } from "../../components/EmptyState";
+import { WordCard } from "../../components/WordCard";
+import { AppModal } from "../../components/AppModal";
 import {
-    buttonSelect,
-    circularProgressDictionary,
-    modalStyle,
-    rowStyle,
-    rowStyleDark,
-    searchStyle,
-    tableCellStyle,
-    titleWordsStyle,
-    wordsStyle,
-} from "../../Styles/DictionaryStyle";
-import {EditWord} from "../../components/EditWord";
-import {useLanguage} from "../../hooks/useLanguage";
-import {dictionaryTranslation} from "../../translation/Dictionary";
-import {setTranslation} from "../../utils/setTranslation";
-import {useTheme} from "../../hooks/useTheme";
-import {LoginStatus, NotificationKeys} from "../../services/localKey";
-import {useLogin} from "../../hooks/useLogin";
-import {useWords} from "../../hooks/useWords";
-import {AddToFolder} from "../../components/AddToFolder";
-import {useNotification} from "../../hooks/useNotification";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
+  centeredLoader,
+  pageStack,
+  scrollList,
+  surfaceCard,
+} from "../../Styles/shared";
 
 const DictionaryPage = () => {
-    const {search} = useSearch();
-    const {languageContext} = useLanguage();
-    const {themeContext} = useTheme();
-    const {checkingLogin} = useLogin();
-    const {getWord, wordsHook, speakWord} = useWords();
-    const {addNotification} = useNotification();
+  const { search } = useSearch();
+  const { languageContext } = useLanguage();
+  const { learningPair, pairConfig } = useLearningPair();
+  const { checkingLogin } = useLogin();
+  const { getWord, wordsHook, speakWord } = useWords();
+  const { addNotification } = useNotification();
 
-    const [words, setWords] = useState([] as Word[]);
-    const [statusDelete, setStatusDelete] = useState(false);
-    const [editWord, setEditWord] = useState({} as Word);
-    const [searchWord, setSearchWord] = useState("");
+  const [words, setWords] = useState([] as Word[]);
+  const [editWord, setEditWord] = useState({} as Word);
+  const [searchWord, setSearchWord] = useState("");
+  const [editId, setEditId] = useState(0);
+  const [openModalEdit, setOpenModalEdit] = useState(false);
+  const [openModalFolder, setOpenModalFolder] = useState(false);
+  const [statusLoading, setStatusLoadingUser] = useState(false);
+  const [selectStatus, setSelectStatus] = useState(false);
+  const [selectStatusComp, setSelectStatusComp] = useState([] as boolean[]);
+  const [moveWord, setMoveWord] = useState([] as Word[]);
+  const [studyMode, setStudyMode] = useState(false);
+  const [revealedIds, setRevealedIds] = useState<number[]>([]);
 
-    const [editId, setEditId] = useState(0);
-    const [openModalEdit, setOpenModalEdit] = useState(false);
-    const [openModalFolder, setOpenModalFolder] = useState(false);
-    const [statusLoading, setStatusLoadingUser] = useState(false);
+  const translation = (key: string) =>
+    setTranslation(key, dictionaryTranslation, languageContext);
 
-    const [windowHeight, setWindowHeight] = useState(550);
-    const [selectStatus, setSelectStatus] = useState(false);
-    const [selectStatusComp, setSelectStatusComp] = useState([] as boolean[]);
-    const [moveWord, setMoveWord] = useState([] as Word[]);
+  const emptyStatus = () => {
+    setSelectStatusComp(words.map(() => false));
+  };
 
+  const clearStatus = (stat?: boolean) => {
+    setSelectStatus(stat ?? !selectStatus);
+    emptyStatus();
+    setMoveWord([]);
+  };
 
-    const handleWithOutUpdate = () => setOpenModalEdit(!openModalEdit);
+  const handleCloseModalEdit = () => {
+    setOpenModalEdit(false);
+    getWord();
+    clearStatus(false);
+  };
 
-    const handleCloseModalEdit = () => {
-        setOpenModalEdit(!openModalEdit);
-        getWord();
-        clearStatus(false)
-    };
+  const handleCloseModalFolder = () => {
+    if (moveWord.length) {
+      setOpenModalFolder(false);
+    } else {
+      addNotification("selectWords", NotificationKeys.ERROR);
+    }
+  };
 
-    const handleCloseModalFolder = () => {
-        if (moveWord.length) {
-            setOpenModalFolder(!openModalFolder);
-        } else {
-            addNotification("selectWords", NotificationKeys.ERROR);
+  const setWordModal = (word: Word) => {
+    if (selectStatus) return;
+    if (studyMode && !revealedIds.includes(word.id)) return;
+    setEditWord(word);
+    setEditId(word.id);
+    setOpenModalEdit(true);
+  };
+
+  const toggleStudyMode = (_: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
+    setStudyMode(checked);
+    setRevealedIds([]);
+  };
+
+  const revealTranslation = (id: number) => {
+    setRevealedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+  };
+
+  const clickSelectButton = (index: number, item: Word) => {
+    const next = [...selectStatusComp];
+    next[index] = !next[index];
+    setSelectStatusComp(next);
+
+    if (next[index]) {
+      setMoveWord((prev) => [...prev, item]);
+    } else {
+      setMoveWord((prev) => prev.filter((w) => w.id !== item.id));
+    }
+  };
+
+  useEffect(() => {
+    if (searchWord) {
+      setWords(search(wordsHook, searchWord));
+    } else {
+      setStatusLoadingUser(true);
+      getWord();
+    }
+  }, [searchWord]);
+
+  useEffect(() => {
+    setWords(wordsHook);
+    setStatusLoadingUser(false);
+    emptyStatus();
+  }, [wordsHook]);
+
+  useEffect(() => {
+    checkingLogin(LoginStatus.OTHER);
+    setStatusLoadingUser(true);
+    getWord();
+  }, [learningPair]);
+
+  return (
+    <Box sx={pageStack}>
+      <PageHeader
+        title={translation(pairConfig.sourceLabelKey) + " / " + translation(pairConfig.targetLabelKey)}
+        subtitle={
+          languageContext === "english"
+            ? `${words.length} words`
+            : `${words.length} слов`
         }
-    };
-
-    const textFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => setSearchWord(e.target.value.toLowerCase());
-
-
-    const searchingWord = () => {
-        const wordsArray = search(wordsHook, searchWord);
-        setWords(wordsArray);
-    };
-
-    const setWordModal = (word: Word) => {
-        handleWithOutUpdate();
-        setEditWord(word);
-        setEditId(word.id);
-    };
-
-    const translation = (key: string) => {
-        return setTranslation(key, dictionaryTranslation, languageContext);
-    };
-
-    const emptyStatus = () => {
-        const statusArr = [];
-        for (let i = 0; i <= words.length; i++) {
-            statusArr.push(false);
+        action={
+          <Button
+            size="small"
+            variant={selectStatus ? "outlined" : "contained"}
+            onClick={() => clearStatus()}
+          >
+            {selectStatus ? translation("cancel") : translation("select")}
+          </Button>
         }
-        setSelectStatusComp(statusArr);
-    };
+      />
 
-    const clearStatus = (stat?: boolean) => {
-        setSelectStatus(stat ?? !selectStatus), emptyStatus(), setMoveWord([]);
-    };
-
-    const clickSelectButton = (index: number, item: Word) => {
-        setSelectStatusComp([]);
-        setTimeout(() => {
-            const edit = selectStatusComp;
-            edit[index] = !edit[index];
-            if (edit[index]) {
-                moveWord.push(item);
-            } else {
-                moveWord.splice(moveWord.map((el) => el.id).indexOf(item.id), 1);
-            }
-            setSelectStatusComp(edit);
-        }, 1);
-    };
-
-    useEffect(() => {
-        setStatusDelete(false);
-    }, [statusDelete]);
-
-    useEffect(() => {
-        if (searchWord) {
-            searchingWord();
-        } else {
-            setStatusLoadingUser(true);
-            getWord();
-        }
-    }, [searchWord]);
-
-    useEffect(() => {
-        setWords(wordsHook);
-        setWindowHeight(window.outerHeight);
-        setStatusLoadingUser(false);
-    }, [wordsHook]);
-
-    useEffect(() => {
-        checkingLogin(LoginStatus.OTHER);
-        setStatusLoadingUser(true);
-        getWord();
-    }, []);
-
-    useEffect(() => {
-        emptyStatus();
-    }, [words]);
-
-    return (
-        <>
-            <Modal
-                open={openModalEdit}
-                onClose={handleWithOutUpdate}
-                aria-labelledby="simple-modal-title"
-                aria-describedby="simple-modal-description"
-            >
-                <Box
-                    sx={modalStyle}
-                    style={{
-                        backgroundColor: themeContext === "dark" ? "#232323" : "white",
-                    }}
-                >
-                    <EditWord
-                        editId={editId}
-                        wordEdit={editWord}
-                        handleCloseModal={handleCloseModalEdit}
-                        setStatusLoadingUser={setStatusLoadingUser}
-                    />
-                </Box>
-            </Modal>
-
-
-            <Modal
-                open={openModalFolder}
-                onClose={handleCloseModalFolder}
-                aria-labelledby="simple-modal-title"
-                aria-describedby="simple-modal-description"
-            >
-                <Box
-                    sx={modalStyle}
-                    style={{
-                        backgroundColor: themeContext === "dark" ? "#232323" : "white",
-                    }}
-                >
-                    <AddToFolder
-                        handleCloseModal={handleCloseModalFolder}
-                        moveWord={moveWord}
-                    />
-                </Box>
-            </Modal>
-
-            <Box sx={{display: "flex"}}>
-                <TextField
-                    hiddenLabel
-                    id="filled-hidden-label-small"
-                    variant="filled"
-                    size="small"
-                    placeholder={translation("searchWord")}
-                    sx={searchStyle}
-                    onChange={textFieldChange}
-                    InputProps={{
-                        endAdornment: <SearchIcon/>,
-                    }}
-                />
-                {selectStatus ? (
-                    <Box sx={{display: "flex"}}>
-                        <Button sx={buttonSelect} onClick={() => clearStatus()}>
-                            {translation("cancel")}
-                        </Button>
-                        <Button
-                            sx={{fontSize: "14px"}}
-                            onClick={() => handleCloseModalFolder()}
-                        >
-                            {translation("add")}
-                        </Button>
-                    </Box>
-                ) : (
-                    <Button sx={buttonSelect} onClick={() => clearStatus()}>
-                        {translation("select")}
-                    </Button>
-                )}
+      <Box sx={surfaceCard}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={studyMode}
+              onChange={toggleStudyMode}
+              color="primary"
+            />
+          }
+          label={
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {translation("studyMode")}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" display="block">
+                {translation("studyModeDescription")}
+              </Typography>
             </Box>
+          }
+          sx={{ m: 0, width: "100%", alignItems: "flex-start" }}
+        />
+      </Box>
 
-            <Paper sx={{overflow: "hidden"}}>
-                <TableContainer
-                    sx={{maxHeight: (windowHeight / 100) * 63, margin: "0 0 0 0"}}
-                >
-                    <Table stickyHeader aria-label="sticky table">
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>
-                                    <Typography sx={titleWordsStyle}>
-                                        {translation("english")}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography sx={titleWordsStyle}>
-                                        {translation("russian")}
-                                    </Typography>
-                                </TableCell>
-                            </TableRow>
-                        </TableHead>
-                        {statusLoading ? (
-                            <CircularProgress sx={circularProgressDictionary}/>
-                        ) : (
-                            <TableBody>
-                                {words.map((item, index) => (
-                                    <TableRow
-                                        key={index}
-                                        onClick={() => {
-                                            setWordModal(item);
-                                        }}
-                                        sx={themeContext === "dark" ? rowStyleDark : rowStyle}
-                                    >
-                                        <TableCell sx={{maxWidth: "150px"}}>
-                                            <Typography sx={tableCellStyle}>
-                                                {selectStatus ? (
-                                                    <Typography
-                                                        sx={{margin: "5px 10px 0 35px"}}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            clickSelectButton(index, item);
-                                                        }}
-                                                    >
+      <Box sx={surfaceCard}>
+        <TextField
+          fullWidth
+          size="small"
+          placeholder={translation("searchWord")}
+          value={searchWord}
+          onChange={(e) => setSearchWord(e.target.value.toLowerCase())}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          }}
+        />
+      </Box>
 
-                                                        {selectStatusComp[index] ? <CheckCircleOutlineIcon/> :
-                                                            <RadioButtonUncheckedIcon/>}
-                                                    </Typography>
-                                                ) : (
-                                                    ""
-                                                )}
-                                                <Typography
-                                                    onClick={(e) => {
-                                                        e.stopPropagation(), speakWord(item.word);
-                                                    }}
-                                                    sx={{margin: "3px 0 0 0"}}
-                                                >
-                                                    <VolumeUpIcon fontSize="medium" color="primary"/>
-                                                </Typography>
-                                                <Typography lang="en" sx={wordsStyle}>
-                                                    {capitalize(item.word)}
-                                                </Typography>
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell
-                                            sx={{maxWidth: "150px"}}
-                                        >
-                                            <Typography lang="ru" sx={wordsStyle}>
-                                                {capitalize(item.correctTranslation)}
-                                            </Typography>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        )}
-                    </Table>
-                </TableContainer>
-            </Paper>
-        </>
-    );
+      {selectStatus && moveWord.length > 0 ? (
+        <Button variant="contained" onClick={() => setOpenModalFolder(true)}>
+          {translation("add")} ({moveWord.length})
+        </Button>
+      ) : null}
+
+      {statusLoading ? (
+        <Box sx={centeredLoader}>
+          <CircularProgress />
+        </Box>
+      ) : words.length === 0 ? (
+        <EmptyState
+          title={
+            languageContext === "english"
+              ? "No words yet"
+              : "Слов пока нет"
+          }
+          description={
+            languageContext === "english"
+              ? "Add your first word to start learning"
+              : "Добавьте первое слово, чтобы начать"
+          }
+        />
+      ) : (
+        <Stack sx={scrollList}>
+          {words.map((item, index) => (
+            <WordCard
+              key={`${item.id}-${item.word}`}
+              word={item}
+              sourceLang={pairConfig.sourceLang}
+              targetLang={pairConfig.targetLang}
+              onPress={() => setWordModal(item)}
+              onSpeak={() => speakWord(item.word)}
+              selectable={selectStatus}
+              selected={selectStatusComp[index]}
+              onToggleSelect={() => clickSelectButton(index, item)}
+              blurTarget={studyMode}
+              targetRevealed={revealedIds.includes(item.id)}
+              onRevealTarget={() => revealTranslation(item.id)}
+              revealHint={translation("tapToReveal")}
+            />
+          ))}
+        </Stack>
+      )}
+
+      <Modal open={openModalEdit} onClose={() => setOpenModalEdit(false)}>
+        <AppModal>
+          <EditWord
+            editId={editId}
+            wordEdit={editWord}
+            handleCloseModal={handleCloseModalEdit}
+            setStatusLoadingUser={setStatusLoadingUser}
+          />
+        </AppModal>
+      </Modal>
+
+      <Modal open={openModalFolder} onClose={handleCloseModalFolder}>
+        <AppModal>
+          <AddToFolder
+            handleCloseModal={handleCloseModalFolder}
+            moveWord={moveWord}
+          />
+        </AppModal>
+      </Modal>
+    </Box>
+  );
 };
 
 export default DictionaryPage;

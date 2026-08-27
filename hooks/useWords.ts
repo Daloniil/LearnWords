@@ -3,13 +3,23 @@ import Router from "next/router";
 import { useState } from "react";
 import { Enter } from "../Interfaces/EnterInterface";
 import { Word } from "../Interfaces/ProvidersInterface";
-import { ContextKey, NotificationKeys } from "../services/localKey";
+import { NotificationKeys } from "../services/localKey";
+import { createEmptyWordsDoc } from "../utils/learningPair";
+import {
+  buildWordPair,
+  ensureWordArrays,
+  getWordArrays,
+  isDuplicateOnEdit,
+  isDuplicateWord,
+} from "../utils/wordHelpers";
 import { useAuth } from "./useAuth";
+import { useLearningPair } from "./useLearningPair";
 import { useNotification } from "./useNotification";
 
 export const useWords = () => {
   const { authContext } = useAuth();
   const { addNotification } = useNotification();
+  const { pairConfig } = useLearningPair();
 
   const [wordsHook, setWordsHook] = useState([] as Word[]);
 
@@ -19,36 +29,20 @@ export const useWords = () => {
       const docRef = doc(db, "words", authContext.user.uid);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        setWordsHook(docSnap.data().englishWords);
+        const { sourceWords } = getWordArrays(docSnap.data(), pairConfig);
+        setWordsHook(sourceWords);
       } else {
-        const db = getFirestore();
-        const collectionId = "words";
-        const documentId = authContext.user.uid;
-
-        const value = {
-          russianWords: [],
-          englishWords: [],
-          uid: authContext.user.uid,
-        };
-        setDoc(doc(db, collectionId, documentId), value);
+        setDoc(
+          doc(db, "words", authContext.user.uid),
+          createEmptyWordsDoc(authContext.user.uid)
+        );
         Router.push("/enter");
       }
     }
   };
 
   const updateWord = async (id: number, data: Enter) => {
-    const newEnglishWord = {
-      id: id,
-      word: data.englishWord,
-      correctTranslation: data.russianWord,
-      point: 0,
-    };
-    const newRussianWord = {
-      id: id,
-      word: data.russianWord,
-      correctTranslation: data.englishWord,
-      point: 0,
-    };
+    const { sourceWord, targetWord } = buildWordPair(id, data);
 
     if (authContext.user) {
       const db = getFirestore();
@@ -56,44 +50,25 @@ export const useWords = () => {
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        let arr = docSnap.data();
-        const wordsEnglish = arr.englishWords as Word[];
-        const wordsRussian = arr.russianWords as Word[];
+        const arr = ensureWordArrays({ ...docSnap.data() }, pairConfig);
+        const { sourceWords, targetWords } = getWordArrays(arr, pairConfig);
 
-        const keys = [ContextKey.ENGLISH, ContextKey.RUSSIAN];
-        const repeatingWord = [] as string[];
-
-        const findWords = (data: Enter, key: string) => {
-          if (key === ContextKey.ENGLISH) {
-            return wordsEnglish.find((item) => item.word === data.englishWord);
-          }
-          return wordsRussian.find((item) => item.word === data.russianWord);
-        };
-
-        keys.forEach((lang) => {
-          if (findWords(data, lang)) {
-            repeatingWord.push(lang);
-          }
-        });
-
-        if (repeatingWord.length > 1) {
+        if (isDuplicateOnEdit(data, sourceWords, targetWords, id)) {
           addNotification("hasAlready", NotificationKeys.ERROR);
           return;
-        } else {
-          const indexEnglish = wordsEnglish
-            .map((id: Word) => id.id)
-            .indexOf(newEnglishWord.id);
-          wordsEnglish[indexEnglish] = newEnglishWord;
-
-          const indexRussian = wordsRussian
-            .map((id: Word) => id.id)
-            .indexOf(newRussianWord.id);
-          wordsRussian[indexRussian] = newRussianWord;
-
-          setDoc(docRef, arr);
-          addNotification("wordEdit", NotificationKeys.SUCCESS);
-          return;
         }
+
+        const indexSource = sourceWords.map((item) => item.id).indexOf(id);
+        sourceWords[indexSource] = sourceWord;
+
+        const indexTarget = targetWords.map((item) => item.id).indexOf(id);
+        targetWords[indexTarget] = targetWord;
+
+        arr[pairConfig.sourceKey] = sourceWords;
+        arr[pairConfig.targetKey] = targetWords;
+
+        setDoc(docRef, arr);
+        addNotification("wordEdit", NotificationKeys.SUCCESS);
       }
     }
   };
@@ -105,17 +80,20 @@ export const useWords = () => {
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        let arr = docSnap.data();
-        const wordsEnglish = arr.englishWords as Word[];
-        const wordsRussian = arr.russianWords as Word[];
+        const arr = { ...docSnap.data() };
+        const { sourceWords, targetWords } = getWordArrays(arr, pairConfig);
 
-        const indexEnglish = wordsEnglish.map((id: Word) => id.id).indexOf(id);
+        sourceWords.splice(
+          sourceWords.map((item) => item.id).indexOf(id),
+          1
+        );
+        targetWords.splice(
+          targetWords.map((item) => item.id).indexOf(id),
+          1
+        );
 
-        wordsEnglish.splice(indexEnglish, 1);
-
-        const indexRussian = wordsRussian.map((id: Word) => id.id).indexOf(id);
-
-        wordsRussian.splice(indexRussian, 1);
+        arr[pairConfig.sourceKey] = sourceWords;
+        arr[pairConfig.targetKey] = targetWords;
 
         setDoc(docRef, arr);
         addNotification("wordDelete", NotificationKeys.SUCCESS);
@@ -130,79 +108,42 @@ export const useWords = () => {
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        let arr = docSnap.data();
-        const wordsEnglish = arr.englishWords as Word[];
-        const wordsRussian = arr.russianWords as Word[];
+        const arr = ensureWordArrays({ ...docSnap.data() }, pairConfig);
+        const { sourceWords, targetWords } = getWordArrays(arr, pairConfig);
 
-        const keys = [ContextKey.ENGLISH, ContextKey.RUSSIAN];
-        const repeatingWord = [] as string[];
-
-        const findWords = (data: Enter, key: string) => {
-          if (key === ContextKey.ENGLISH) {
-            return wordsEnglish.find((item) => item.word === data.englishWord);
-          }
-          return wordsRussian.find((item) => item.word === data.russianWord);
-        };
-
-        keys.forEach((lang) => {
-          if (findWords(data, lang)) {
-            repeatingWord.push(lang);
-          }
-        });
-
-        if (repeatingWord.length > 1) {
+        if (isDuplicateWord(data, sourceWords, targetWords)) {
           addNotification("hasAlready", NotificationKeys.ERROR);
           return;
-        } else {
-          const newEnglishWord = {
-            id: wordsEnglish.length,
-            word: data.englishWord,
-            correctTranslation: data.russianWord,
-            point: 0,
-          };
-          const newRussianWord = {
-            id: wordsRussian.length,
-            word: data.russianWord,
-            correctTranslation: data.englishWord,
-            point: 0,
-          };
-          wordsEnglish.push(newEnglishWord);
-          wordsRussian.push(newRussianWord);
-          addNotification("wordAdd", NotificationKeys.SUCCESS);
-          setDoc(docRef, arr);
-          return;
         }
+
+        const newId = sourceWords.length;
+        const { sourceWord, targetWord } = buildWordPair(newId, data);
+
+        sourceWords.push(sourceWord);
+        targetWords.push(targetWord);
+
+        arr[pairConfig.sourceKey] = sourceWords;
+        arr[pairConfig.targetKey] = targetWords;
+
+        addNotification("wordAdd", NotificationKeys.SUCCESS);
+        setDoc(docRef, arr);
       } else {
-        const db = getFirestore();
-        const collectionId = "words";
-        const documentId = authContext.user.uid;
+        const { sourceWord, targetWord } = buildWordPair(0, data);
+        const value = createEmptyWordsDoc(authContext.user.uid);
+        value[pairConfig.sourceKey] = [sourceWord] as never;
+        value[pairConfig.targetKey] = [targetWord] as never;
 
-        const newEnglishWord = {
-          id: 1,
-          word: data.englishWord,
-          correctTranslation: data.russianWord,
-          point: 0,
-        };
-        const newRussianWord = {
-          id: 1,
-          word: data.russianWord,
-          correctTranslation: data.englishWord,
-          point: 0,
-        };
-
-        const value = {
-          russianWords: [newRussianWord],
-          englishWords: [newEnglishWord],
-          uid: authContext.user.uid,
-        };
-        setDoc(doc(db, collectionId, documentId), value);
+        setDoc(doc(db, "words", authContext.user.uid), value);
         addNotification("wordAdd", NotificationKeys.SUCCESS);
       }
     }
   };
 
   const speakWord = (text: string) => {
-    speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang =
+      pairConfig.sourceLang === "es" ? "es-ES" : "en-US";
+    speechSynthesis.speak(utterance);
   };
 
   return {

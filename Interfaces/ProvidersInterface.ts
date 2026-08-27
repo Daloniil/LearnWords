@@ -1,9 +1,8 @@
+import { LearningPair } from "../utils/learningPair";
+
 export type WordsContextType = {
-  englishWords: Word[];
-  russianWords: Word[];
-  setWord: (word: Word, key: string) => void;
-  updateWord: (word: Word, key: string) => void;
-  deleteWord: (index: number, key: string) => void;
+  sourceWords: Word[];
+  targetWords: Word[];
 };
 
 export type AuthContextType = {
@@ -31,8 +30,10 @@ export type Word = {
 export type FoldersType = {
   id: number;
   name: string;
-  englishWords: Word[];
-  russianWords: Word[];
+  englishWords?: Word[];
+  russianWords?: Word[];
+  spanishWords?: Word[];
+  russianWordsEs?: Word[];
 };
 
 export type NotificationContextType = {
@@ -45,6 +46,11 @@ export type NotificationContextType = {
 export type LanguageContextType = {
   languageContext: string;
   setLanguageContext: (language: string) => void;
+};
+
+export type LearningPairContextType = {
+  learningPair: LearningPair;
+  setLearningPair: (pair: LearningPair) => void;
 };
 
 export type OneStat = {

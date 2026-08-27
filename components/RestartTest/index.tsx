@@ -1,15 +1,10 @@
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Button, Stack, Typography } from "@mui/material";
 import { useLanguage } from "../../hooks/useLanguage";
 import { useStats } from "../../hooks/useStats";
-import { useTheme } from "../../hooks/useTheme";
 import { RestartTestProps } from "../../Interfaces/RestartTestInterface";
-import {
-  buttonContainerStyle,
-  buttonStyle,
-  titleStyle,
-} from "../../Styles/RestartTestStyle";
 import { restartTestTranslation } from "../../translation/RestartTest";
 import { setTranslation } from "../../utils/setTranslation";
+import { fullWidthButton } from "../../Styles/shared";
 
 export const RestartTest = ({
   handleCloseModal,
@@ -17,41 +12,36 @@ export const RestartTest = ({
 }: RestartTestProps) => {
   const { languageContext } = useLanguage();
   const { addStatsServer } = useStats();
-  const { themeContext } = useTheme();
 
-  const translation = (key: string) => {
-    return setTranslation(key, restartTestTranslation, languageContext);
-  };
+  const translation = (key: string) =>
+    setTranslation(key, restartTestTranslation, languageContext);
 
   return (
-    <Box
-      sx={{
-        backgroundColor: themeContext === "dark" ? "black" : "white",
-        borderRadius: "5px",
-      }}
-    >
-      <Typography sx={titleStyle}>{translation("wantToRestart")}</Typography>
+    <Box>
+      <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, textAlign: "center" }}>
+        {translation("wantToRestart")}
+      </Typography>
 
-      <Box sx={buttonContainerStyle}>
+      <Stack spacing={1.5}>
         <Button
           onClick={() => {
-            restartTest(), addStatsServer();
+            restartTest();
+            addStatsServer();
           }}
           variant="contained"
-          color="success"
-          sx={buttonStyle}
+          color="primary"
+          sx={fullWidthButton}
         >
           {translation("yes")}
         </Button>
         <Button
           onClick={handleCloseModal}
           variant="outlined"
-          color="error"
-          sx={buttonStyle}
+          sx={fullWidthButton}
         >
           {translation("no")}
         </Button>
-      </Box>
+      </Stack>
     </Box>
   );
 };

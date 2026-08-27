@@ -5,14 +5,34 @@ export const settingsTranslation = [
     en: "Change Language:",
   },
   {
+    title: "changeLearningPair",
+    ru: "Режим обучения:",
+    en: "Learning Mode:",
+  },
+  {
     title: "russian",
     ru: "Русский",
     en: "Russian",
   },
   {
     title: "english",
-    ru: "Английський",
+    ru: "Английский",
     en: "English",
+  },
+  {
+    title: "spanish",
+    ru: "Испанский",
+    en: "Spanish",
+  },
+  {
+    title: "pairEnRu",
+    ru: "English ↔ Russian",
+    en: "English ↔ Russian",
+  },
+  {
+    title: "pairEsRu",
+    ru: "Español ↔ Русский",
+    en: "Español ↔ Russian",
   },
   {
     title: "changeTheme",

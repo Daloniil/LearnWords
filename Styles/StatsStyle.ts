@@ -1,70 +1,45 @@
 export const statsTitleStyle = {
-  textAlign: "center",
-  fontSize: "22px",
-  fontWeight: "600",
+  textAlign: "left" as const,
+  fontSize: "1.25rem",
+  fontWeight: 700,
 };
 
 export const statsBoxStyle = {
   width: "100%",
-  margin: "5px auto 5px auto",
-  border: 2,
-  borderColor: "#E0E0E0",
-  borderRadius: "5px",
 };
 
 export const scrollStatsStyle = {
-  maxHeight: "600px",
-  overflow: "hidden",
-  overflowY: "scroll",
-  margin: "20px 0 0 0",
+  display: "flex",
+  flexDirection: "column" as const,
+  gap: 1.5,
+  maxHeight: { xs: "calc(100dvh - 260px)", sm: 560 },
+  overflowY: "auto" as const,
+  pr: 0.5,
 };
 
 export const indentsBoxStyle = {
-  padding: "0 0 0 10px",
-  margin: "5px 0 5px 0",
-  fontWeight: "450",
-  fontSize: "17px",
+  flex: 1,
+  minWidth: 0,
   cursor: "pointer",
-  overflowWrap: "break-word",
-  wordWrap: " break-word",
-  msHyphens: "auto",
-  mozHyphens: "auto",
-  webkitHyphens: "auto",
-  hyphens: "auto",
 };
 
 export const titleTestStyle = {
-  fontSize: "20px",
-  fontWeight: "600",
-  margin: "0 0 5px 0",
+  fontSize: "1rem",
+  fontWeight: 700,
+  mb: 0.5,
 };
 
 export const statBoxStyle = {
   width: "100%",
-  maxHeight: "600px",
-  overflow: "hidden",
-  overflowY: "scroll",
-  margin: "20px auto 2px auto",
-  border: 2,
-  borderColor: "#E0E0E0",
-  borderRadius: "5px",
-  cursor: "pointer",
 };
 
 export const deleteButtonStyle = {
-  margin: "5px 5px 0 0",
-  float: "right",
   cursor: "pointer",
 };
 
 export const elemStats = {
-  fontWeight: "450",
-  fontSize: "17px",
-  margin: "0 5px 5px 0",
-  overflowWrap: "break-word",
-  wordWrap: " break-word",
-  msHyphens: "auto",
-  mozHyphens: "auto",
-  webkitHyphens: "auto",
-  hyphens: "auto",
+  fontSize: "0.875rem",
+  color: "text.secondary",
+  overflowWrap: "break-word" as const,
+  wordBreak: "break-word" as const,
 };

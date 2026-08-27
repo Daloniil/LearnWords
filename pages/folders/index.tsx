@@ -1,143 +1,152 @@
 import {
-    Box,
-    Button,
-    capitalize,
-    CircularProgress,
-    Modal,
-    Typography,
+  Box,
+  Button,
+  capitalize,
+  CircularProgress,
+  IconButton,
+  Modal,
+  Stack,
+  Typography,
 } from "@mui/material";
 import Router from "next/router";
-import {useEffect, useState} from "react";
-import {AddFolder} from "../../components/AddFolder";
-import {useFolders} from "../../hooks/useFolders";
-import {useLogin} from "../../hooks/useLogin";
-import {useTheme} from "../../hooks/useTheme";
-import {LoginStatus} from "../../services/localKey";
-import {modalStyle} from "../../Styles/DictionaryStyle";
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import { useEffect, useState } from "react";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import { AddFolder } from "../../components/AddFolder";
+import { useFolders } from "../../hooks/useFolders";
+import { useLogin } from "../../hooks/useLogin";
+import { LoginStatus } from "../../services/localKey";
+import { useLanguage } from "../../hooks/useLanguage";
+import { useLearningPair } from "../../hooks/useLearningPair";
+import { getWordArrays } from "../../utils/wordHelpers";
+import { folderTranslation } from "../../translation/Folder";
+import { setTranslation } from "../../utils/setTranslation";
+import { PageHeader } from "../../components/PageHeader";
+import { EmptyState } from "../../components/EmptyState";
+import { AppModal } from "../../components/AppModal";
 import {
-    deleteButtonStyle,
-    elemStats,
-    indentsBoxStyle,
-    scrollStatsStyle,
-    statsBoxStyle,
-    titleTestStyle,
-} from "../../Styles/StatsStyle";
-import {titleFolders, topBarFolder} from "../../Styles/FoldersStyle";
-import {useLanguage} from "../../hooks/useLanguage";
-import {folderTranslation} from "../../translation/Folder";
-import {setTranslation} from "../../utils/setTranslation";
+  centeredLoader,
+  listCard,
+  pageStack,
+  scrollList,
+} from "../../Styles/shared";
+import { scrollStatsStyle } from "../../Styles/StatsStyle";
 
 const FoldersPage = () => {
-    const {getFolders, deleteFolder, foldersHook} = useFolders();
-    const {checkingLogin} = useLogin();
-    const {themeContext} = useTheme();
-    const {languageContext} = useLanguage();
+  const { getFolders, deleteFolder, foldersHook } = useFolders();
+  const { checkingLogin } = useLogin();
+  const { languageContext } = useLanguage();
+  const { learningPair, pairConfig } = useLearningPair();
 
-    const [openModal, setOpenModal] = useState(false);
-    const [statusLoading, setStatusLoading] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
+  const [statusLoading, setStatusLoading] = useState(false);
 
-    const handleCloseModal = () => {
-        setOpenModal(!openModal);
-        if (openModal) {
-            reload();
+  const translation = (key: string) =>
+    setTranslation(key, folderTranslation, languageContext);
+
+  const handleCloseModal = () => {
+    setOpenModal(!openModal);
+    getFolders();
+  };
+
+  useEffect(() => {
+    checkingLogin(LoginStatus.OTHER);
+    setStatusLoading(true);
+    getFolders().finally(() => setStatusLoading(false));
+  }, [learningPair]);
+
+  return (
+    <Box sx={pageStack}>
+      <PageHeader
+        title={translation("folders")}
+        action={
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<AddIcon />}
+            onClick={() => setOpenModal(true)}
+          >
+            {translation("add")}
+          </Button>
         }
-        getFolders();
-    };
+      />
 
-    const reload = () => {
-        setStatusLoading(true);
-        setTimeout(() => {
-            setStatusLoading(false);
-        }, 700);
-    };
+      {statusLoading ? (
+        <Box sx={centeredLoader}>
+          <CircularProgress />
+        </Box>
+      ) : foldersHook.length === 0 ? (
+        <EmptyState
+          icon={<FolderOutlinedIcon sx={{ fontSize: 40 }} />}
+          title={
+            languageContext === "english" ? "No folders yet" : "Папок пока нет"
+          }
+          description={
+            languageContext === "english"
+              ? "Create a folder to organize words for tests"
+              : "Создайте папку для организации слов в тестах"
+          }
+          action={
+            <Button variant="contained" onClick={() => setOpenModal(true)}>
+              {translation("add")}
+            </Button>
+          }
+        />
+      ) : (
+        <Stack sx={{ ...scrollStatsStyle, ...scrollList }}>
+          {foldersHook.map((item) => {
+            const { sourceWords } = getWordArrays(item, pairConfig);
+            return (
+              <Box key={item.id} sx={listCard}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Box
+                    sx={{ flex: 1, minWidth: 0 }}
+                    onClick={() => Router.push(`/folders/${item.id}`)}
+                  >
+                    <Typography sx={{ fontWeight: 700, mb: 0.5 }}>
+                      {item.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {sourceWords.length}{" "}
+                      {languageContext === "english" ? "words" : "слов"}
+                    </Typography>
+                    {sourceWords.slice(0, 2).map((word, idx) => (
+                      <Typography
+                        key={word.id}
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mt: 0.5 }}
+                      >
+                        {idx + 1}. {capitalize(word.word)} —{" "}
+                        {capitalize(word.correctTranslation)}
+                      </Typography>
+                    ))}
+                  </Box>
+                  <IconButton
+                    color="error"
+                    size="small"
+                    onClick={() => deleteFolder(item.id)}
+                    aria-label="delete folder"
+                  >
+                    <DeleteOutlineIcon />
+                  </IconButton>
+                  <ChevronRightIcon color="disabled" />
+                </Stack>
+              </Box>
+            );
+          })}
+        </Stack>
+      )}
 
-    const translation = (key: string) => {
-        return setTranslation(key, folderTranslation, languageContext);
-    };
-
-    useEffect(() => {
-        checkingLogin(LoginStatus.OTHER);
-        reload();
-        getFolders();
-    }, []);
-    return (
-        <>
-            <Modal
-                open={openModal}
-                onClose={handleCloseModal}
-                aria-labelledby="simple-modal-title"
-                aria-describedby="simple-modal-description"
-            >
-                <Box
-                    sx={modalStyle}
-                    style={{
-                        backgroundColor: themeContext === "dark" ? "#232323" : "white",
-                    }}
-                >
-                    <AddFolder handleCloseModal={handleCloseModal}/>
-                </Box>
-            </Modal>
-            {statusLoading ? (
-                <CircularProgress
-                    sx={{
-                        minWidth: "100px",
-                        minHeight: "100px",
-                        margin: "25px auto 25px auto",
-                    }}
-                />
-            ) : (
-                <>
-                    <Box sx={topBarFolder}>
-                        <Typography sx={titleFolders}>{translation("folders")}</Typography>
-                        <Button
-                            onClick={() => handleCloseModal()}
-                            sx={{margin: "0 0 0 auto"}}
-                        >
-                            {translation("add")}
-                        </Button>
-                    </Box>
-
-                    <Box sx={scrollStatsStyle}>
-                        {foldersHook.map((item, index) => (
-                            <Box key={item.id} sx={statsBoxStyle}>
-                                <Typography
-                                    sx={deleteButtonStyle}
-                                    onClick={() => {
-                                        reload(),
-                                            deleteFolder(item.id)
-                                    }}
-                                    color={"error"}
-                                >
-                                    <DeleteForeverIcon/>
-                                </Typography>
-                                <Box
-                                    sx={indentsBoxStyle}
-                                    onClick={() => Router.push(`/folders/${item.id}`)}
-                                >
-                                    <Typography sx={titleTestStyle}>{item.name}</Typography>
-
-                                    <Typography sx={elemStats} lang="ru">
-                                        {item.englishWords[0]
-                                            ? `     1. ${capitalize(item.englishWords[0].word)}
-                - 
-                ${capitalize(item.englishWords[0].correctTranslation)}`
-                                            : ""}
-                                    </Typography>
-
-                                    {item.englishWords[1]
-                                        ? `     2. ${capitalize(item.englishWords[1].word)}
-                - 
-                ${capitalize(item.englishWords[1].correctTranslation)}`
-                                        : ""}
-                                </Box>
-                            </Box>
-                        ))}
-                    </Box>
-                </>
-            )}
-        </>
-    );
+      <Modal open={openModal} onClose={handleCloseModal}>
+        <AppModal>
+          <AddFolder handleCloseModal={handleCloseModal} />
+        </AppModal>
+      </Modal>
+    </Box>
+  );
 };
 
 export default FoldersPage;

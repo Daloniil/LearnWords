@@ -20,8 +20,9 @@ export const titleStyle = {
 };
 
 export const addStyle = {
-  margin: "0 10px 0 0",
-  float: "right",
+  margin: "10px auto 0 auto",
+  display: "block",
+  width: { xs: "100%", sm: "auto" },
 };
 
 export const translateWord = {

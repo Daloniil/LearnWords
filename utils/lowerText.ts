@@ -1,7 +1,7 @@
 import { Enter } from "../Interfaces/EnterInterface";
 
 export const lowerText = (data: Enter) => {
-  data.englishWord = data.englishWord.toLowerCase();
-  data.russianWord = data.russianWord.toLowerCase();
+  data.sourceWord = data.sourceWord.toLowerCase();
+  data.targetWord = data.targetWord.toLowerCase();
   return data;
 };

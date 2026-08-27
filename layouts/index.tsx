@@ -1,90 +1,66 @@
-import {Box, Container, CssBaseline, Paper, Toolbar} from "@mui/material";
-
-import {useRouter} from "next/router";
-import React from "react";
-
-import {useEffect, useState} from "react";
-import {Bar} from "../components/Bar";
-import {DrawerBar} from "../components/Drawer";
-import {useLanguage} from "../hooks/useLanguage";
-import {useTheme} from "../hooks/useTheme";
-import {LayoutProps} from "../Interfaces/LayoutInterface";
-import {Mode} from "../services/localKey";
-import {paths} from "../utils/path";
-import {createTheme, ThemeProvider} from "@mui/material/styles";
-import {useAuth} from "../hooks/useAuth";
+import { Box, Container, CssBaseline } from "@mui/material";
+import { ThemeProvider } from "@mui/material/styles";
+import React, { useEffect, useState } from "react";
+import { BottomNav } from "../components/BottomNav";
+import { useTheme } from "../hooks/useTheme";
+import { LayoutProps } from "../Interfaces/LayoutInterface";
+import { Mode } from "../services/localKey";
+import { createAppTheme } from "../theme/appTheme";
+import { useAuth } from "../hooks/useAuth";
 import { BlockedAccessCard } from "../components/BlockedAccess";
-// import Snowfall from 'react-snowfall'
 
-const Layout = ({children}: LayoutProps) => {
-    const router = useRouter();
-    const {languageContext} = useLanguage();
-    const {themeContext} = useTheme();
-    const {authContext} = useAuth();
+const Layout = ({ children }: LayoutProps) => {
+  const { themeContext } = useTheme();
+  const { authContext } = useAuth();
 
-    const [mode, setMode] = useState<Mode.DARK | Mode.LIGHT>(Mode.LIGHT);
+  const [mode, setMode] = useState<Mode.DARK | Mode.LIGHT>(Mode.LIGHT);
+  const theme = createAppTheme(mode);
 
-    const [open, setOpen] = useState(false);
-    const items = paths.find((path) => path.pathName === router.asPath);
-
-    const theme = createTheme({
-        palette: {
-            mode,
-        },
-        components: {
-            MuiCssBaseline: {
-                styleOverrides: {
-                    body: {
-                        overflow: "hidden",
-                    },
-                },
-            },
-        },
-    });
-
-    useEffect(() => {
-        setMode(
-            themeContext ? (themeContext as Mode.DARK | Mode.LIGHT) : Mode.LIGHT
-        );
-    }, [themeContext]);
-
-    return (
-        <ThemeProvider theme={theme}>
-            {/*<Snowfall/>*/}
-            {authContext.user.uid === 'hh' ? <BlockedAccessCard/> :
-                <Box sx={{display: "flex"}}>
-                    <CssBaseline/>
-                    <Bar
-                        title={
-                            languageContext === "english" ? items?.en ?? "" : items?.ru ?? ""
-                        }
-                        setOpen={setOpen}
-                    />
-                    <DrawerBar openDrawer={open} setOpenDrawer={setOpen}/>
-
-                    <Box
-                        component="main"
-                        sx={{
-                            backgroundColor: (theme) =>
-                                theme.palette.mode === "light"
-                                    ? theme.palette.grey[100]
-                                    : theme.palette.grey[900],
-                            flexGrow: 1,
-                            height: "100vh",
-                            overflow: "auto",
-                        }}
-                    >
-                        <Toolbar/>
-                        <Container maxWidth="lg" sx={{mt: 4, mb: 4, width: "100vw"}}>
-                            <Paper sx={{p: 2, display: "flex", flexDirection: "column"}}>
-                                {children}
-                            </Paper>
-                        </Container>
-                    </Box>
-                </Box>}
-
-        </ThemeProvider>
+  useEffect(() => {
+    setMode(
+      themeContext ? (themeContext as Mode.DARK | Mode.LIGHT) : Mode.LIGHT
     );
+  }, [themeContext]);
+
+  if (authContext.user.uid === "hh") {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <BlockedAccessCard />
+      </ThemeProvider>
+    );
+  }
+
+  return (
+    <ThemeProvider theme={theme}>
+      <Box sx={{ display: "flex", minHeight: "100dvh", bgcolor: "background.default" }}>
+        <CssBaseline />
+
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            width: "100%",
+            minHeight: "100dvh",
+            overflow: "auto",
+          }}
+        >
+          <Container
+            maxWidth="sm"
+            sx={{
+              px: { xs: 1.5, sm: 2 },
+              pt: { xs: 1.5, sm: 2 },
+              pb: { xs: "calc(64px + env(safe-area-inset-bottom))", sm: 2 },
+            }}
+          >
+            {children}
+          </Container>
+        </Box>
+
+        <BottomNav />
+      </Box>
+    </ThemeProvider>
+  );
 };
 
 export default Layout;

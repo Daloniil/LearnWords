@@ -26,6 +26,7 @@ import {
     pointStyle,
     restartButtonStyle,
     statusBarStyle,
+    testContainerStyle,
     titleStyle,
     variantsBoxStyle,
     variantStyle,
@@ -36,9 +37,10 @@ import Router from "next/router";
 import {useTest} from "../../hooks/useTest";
 import {amountPoint} from "../../utils/amountPoint";
 import {LinearProgressWithLabel} from "../../components/LinearProgress/LinearProgress";
-import {modalStyle} from "../../Styles/DictionaryStyle";
+import {AppModal} from "../../components/AppModal";
 import {RestartTest} from "../../components/RestartTest";
 import {useLanguage} from "../../hooks/useLanguage";
+import {useLearningPair} from "../../hooks/useLearningPair";
 import {testTranslation} from "../../translation/Test";
 import {setTranslation} from "../../utils/setTranslation";
 import {Word, WordsContextType} from "../../Interfaces/ProvidersInterface";
@@ -78,8 +80,12 @@ const TestPage = () => {
 
     const {addNotification} = useNotification();
     const {languageContext} = useLanguage();
+    const {pairConfig} = useLearningPair();
 
-    const [wordsServer, setWordsServer] = useState({} as WordsContextType);
+    const [wordsServer, setWordsServer] = useState<WordsContextType>({
+        sourceWords: [],
+        targetWords: [],
+    });
     const [wordVariants, setWordVariants] = useState([]);
     const [testWords, setTestWord] = useState([] as Word[]);
     const [words, setWords] = useState(null as null | Word[]);
@@ -126,8 +132,8 @@ const TestPage = () => {
                 setWordVariants(
                     createVariantsWord(
                         words[0].correctTranslation,
-                        wordsServer.englishWords,
-                        wordsServer.russianWords
+                        wordsServer.sourceWords,
+                        wordsServer.targetWords
                     )
                 );
             }, 1000);
@@ -160,7 +166,7 @@ const TestPage = () => {
     const selectCorrectWord = (word: string) => {
         setClick(false);
         setCorrectSelectWord(testWords[0].correctTranslation);
-        const wordToSpeak = findLang(testWords[0], wordsServer.englishWords);
+        const wordToSpeak = findLang(testWords[0], wordsServer.sourceWords);
 
         if (testWords[0].correctTranslation === word) {
             if (testWords.length === 1) {
@@ -189,8 +195,8 @@ const TestPage = () => {
 
         const recreate = recreateWords(
             testWords,
-            wordsServer.englishWords,
-            wordsServer.russianWords
+            wordsServer.sourceWords,
+            wordsServer.targetWords
         );
         editWords(false, recreate);
         pointCreate(false);
@@ -215,8 +221,8 @@ const TestPage = () => {
             setWordVariants(
                 createVariantsWord(
                     testWords[0].correctTranslation,
-                    wordsServer.englishWords,
-                    wordsServer.russianWords
+                    wordsServer.sourceWords,
+                    wordsServer.targetWords
                 )
             );
             setShowPoint(testWords[0].point);
@@ -238,8 +244,8 @@ const TestPage = () => {
 
     useEffect(() => {
         if (
-            allWordsHook.englishWords &&
-            allWordsHook.englishWords.length <= WordsParams.MINLENGTH
+            allWordsHook.sourceWords &&
+            allWordsHook.sourceWords.length <= WordsParams.MINLENGTH
         ) {
             addNotification("leastFive", NotificationKeys.ERROR);
             Router.push("/enter");
@@ -271,29 +277,29 @@ const TestPage = () => {
         if (
             !!testWordHook?.length &&
             !!!testWords.length &&
-            wordsServer.englishWords
+            wordsServer.sourceWords
         ) {
             setTestWord(testWordHook);
             setStatusLoading(false);
         }
 
         if (
-            wordsServer.englishWords &&
+            wordsServer.sourceWords &&
             !!!testWords.length &&
             !!!testWordHook?.length
         ) {
             setTestWord(
                 shuffle([
-                    ...wordsServer.englishWords,
-                    ...wordsServer.russianWords,
-                    ...wordsServer.englishWords,
+                    ...wordsServer.sourceWords,
+                    ...wordsServer.targetWords,
+                    ...wordsServer.sourceWords,
                 ])
             );
             setStatusLoading(false);
         }
 
-        if (wordsServer.englishWords) {
-            setAllPercent(wordsServer.englishWords.length * 3);
+        if (wordsServer.sourceWords) {
+            setAllPercent(wordsServer.sourceWords.length * 3);
         }
     }, [wordsServer, testWordHook]);
 
@@ -309,77 +315,82 @@ const TestPage = () => {
 
     return (
         <>
-            <Modal
-                open={openModal}
-                onClose={handleCloseModal}
-                aria-labelledby="simple-modal-title"
-                aria-describedby="simple-modal-description"
-            >
-                <Box sx={modalStyle}>
+            <Modal open={openModal} onClose={handleCloseModal}>
+                <AppModal>
                     <RestartTest
                         handleCloseModal={handleCloseModal}
                         restartTest={restartTest}
                     />
-                </Box>
+                </AppModal>
             </Modal>
 
-            <Modal
-                open={openModalFolder}
-                aria-labelledby="simple-modal-title"
-                aria-describedby="simple-modal-description"
-            >
-                <Box sx={modalStyle}>
+            <Modal open={openModalFolder}>
+                <AppModal>
                     <SelectFolder handleCloseModal={handleCloseModalFolder}/>
-                </Box>
+                </AppModal>
             </Modal>
 
             {statusLoading ? (
                 <CircularProgress sx={circularProgress}/>
             ) : (
-                <>
+                <Box sx={testContainerStyle}>
                     <Button
                         onClick={handleCloseModal}
                         sx={restartButtonStyle}
                         variant="outlined"
                         color="error"
+                        size="small"
                     >
                         {translation("restart")}
                     </Button>
+
                     <Typography sx={titleStyle}>{capitalize(translatedWord)}</Typography>
+
                     <Box sx={pointsStyle}>
                         {amountPoint.map((point, index) => (
                             <Box key={index} sx={pointStyle}>
                                 <Box sx={point <= showPoint ? doneCorrectStyle : doneFailStyle}>
                                     {point <= showPoint ? (
-                                        <DoneIcon sx={{color: "white"}}/>
-                                    ) : (
-                                        ""
-                                    )}
+                                        <DoneIcon sx={{color: "white", fontSize: 18}}/>
+                                    ) : null}
                                 </Box>
                             </Box>
                         ))}
                     </Box>
-                    <Box sx={variantsBoxStyle}>
-                        {wordVariants.map((item, index) => (
-                            <Box
-                                key={index}
-                                onClick={() => {
-                                    click ? selectCorrectWord(item) : "";
-                                }}
-                                sx={variantStyle}
-                            >
-                                <Typography
-                                    sx={variantTestStyle}
-                                    lang={"ru" || "en"}
-                                    style={{
-                                        color: setColor(errorSelectWord, correctSelectWord, item),
+
+                    <Box sx={{flex: 1, display: "flex", alignItems: "center"}}>
+                        <Box sx={variantsBoxStyle}>
+                            {wordVariants.map((item, index) => (
+                                <Box
+                                    key={index}
+                                    onClick={() => {
+                                        click ? selectCorrectWord(item) : undefined;
+                                    }}
+                                    sx={{
+                                        ...variantStyle,
+                                        borderColor:
+                                            setColor(errorSelectWord, correctSelectWord, item) === "green"
+                                                ? "success.main"
+                                                : setColor(errorSelectWord, correctSelectWord, item) === "#ff0000"
+                                                    ? "error.main"
+                                                    : "divider",
                                     }}
                                 >
-                                    {capitalize(item)}
-                                </Typography>
-                            </Box>
-                        ))}
+                                    <Typography
+                                        sx={{
+                                            ...variantTestStyle,
+                                            color:
+                                                setColor(errorSelectWord, correctSelectWord, item) || "text.primary",
+                                        }}
+                                        lang={pairConfig.targetLang}
+                                    >
+                                        {capitalize(item)}
+                                    </Typography>
+                                </Box>
+                            ))}
+                        </Box>
                     </Box>
+
                     <Box sx={statusBarStyle}>
                         <Typography sx={percentBarStyle}>
                             {Math.floor((percent / allPercent) * 100)}%
@@ -389,7 +400,7 @@ const TestPage = () => {
                             sx={barStyle}
                         />
                     </Box>
-                </>
+                </Box>
             )}
         </>
     );

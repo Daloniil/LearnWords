@@ -1,96 +1,106 @@
 export const titleStyle = {
-  fontSize: "20px",
-  textAlign: "center",
-  fontWeight: "800",
-  margin: "10px 0 5px 0",
+  fontSize: { xs: "1.75rem", sm: "2rem" },
+  textAlign: "center" as const,
+  fontWeight: 800,
+  my: 2,
+  wordBreak: "break-word" as const,
 };
 
 export const pointsStyle = {
   display: "flex",
   justifyContent: "center",
-  margin: "5px 0 25px 0",
+  gap: 0.5,
+  my: 2,
 };
 
 export const pointStyle = {
-  margin: "0 2px 0 2px",
+  display: "flex",
 };
 
 export const doneCorrectStyle = {
   borderRadius: "50%",
-  width: "25px",
-  height: "25px",
-  backgroundColor: "green",
+  width: 28,
+  height: 28,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  bgcolor: "success.main",
 };
 
 export const doneFailStyle = {
   borderRadius: "50%",
-  width: "25px",
-  height: "25px",
-  backgroundColor: "gray",
+  width: 28,
+  height: 28,
+  bgcolor: "action.disabledBackground",
 };
 
 export const variantsBoxStyle = {
-  maxWidth: "600px",
-  display: "flex",
-  flexWrap: "wrap",
-  justifyContent: "center",
-  margin: "0 auto 0 auto",
+  display: "grid",
+  gridTemplateColumns: { xs: "1fr 1fr", sm: "1fr 1fr" },
+  gap: 1.5,
+  maxWidth: 480,
+  mx: "auto",
+  width: "100%",
 };
 
 export const variantStyle = {
-  minWidth: "150px",
-  minHeight: "120px",
-  textAlign: "center",
-  border: 2,
-  borderColor: "#E0E0E0",
-  borderRadius: "5px",
-  position: "relative",
+  minHeight: 72,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  textAlign: "center" as const,
+  border: "1px solid",
+  borderColor: "divider",
+  borderRadius: 2,
+  bgcolor: "background.paper",
+  cursor: "pointer",
+  transition: "transform 0.1s ease, border-color 0.15s ease",
+  "&:active": {
+    transform: "scale(0.98)",
+    bgcolor: "action.hover",
+  },
 };
 
 export const variantTestStyle = {
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  marginRight: "-50%",
-  transform: "translate(-50%, -50%)",
-  fontSize: "17px",
-  fontWeight: "450",
-  maxWidth: "120px",
-  overflowWrap: "break-word",
-  wordWrap: " break-word",
-  msHyphens: "auto",
-  mozHyphens: "auto",
-  webkitHyphens: "auto",
-  hyphens: "auto",
+  fontSize: "1rem",
+  fontWeight: 600,
+  px: 1,
+  wordBreak: "break-word" as const,
 };
 
 export const loadingStyle = {
   display: "flex",
   justifyContent: "center",
-  margin: "5px 0 0 0",
+  py: 2,
 };
 
 export const boxTranslationStyle = {
-  border: 2,
-  borderColor: "#E0E0E0",
-  borderRadius: "5px",
-  textAlign: "center",
-  maxWidth: "225px",
-  maxHeight: "100%",
+  border: "1px solid",
+  borderColor: "divider",
+  borderRadius: 2,
+  textAlign: "center" as const,
+  p: 1.5,
 };
 
 export const statusBarStyle = {
-  width: "75%",
-  margin: "10px auto 0 auto",
+  position: "sticky" as const,
+  bottom: { xs: 72, md: 0 },
+  mt: 3,
+  pt: 2,
+  pb: 1,
+  bgcolor: "background.default",
+  borderTop: "1px solid",
+  borderColor: "divider",
 };
 
 export const percentBarStyle = {
   textAlign: "center",
-  margin: "0 0 0 10px",
+  fontWeight: 700,
+  mb: 0.5,
 };
 
 export const barStyle = {
-  margin: "0 0 0 10px",
+  borderRadius: 1,
 };
 
 export const linearStyle = {
@@ -99,13 +109,22 @@ export const linearStyle = {
 };
 
 export const restartButtonStyle = {
-  minWidth: "70px",
-  height: "30px",
-  margin: "-5px -5px 0 auto",
+  position: "absolute" as const,
+  top: 8,
+  right: 8,
+  minWidth: 44,
+  minHeight: 36,
 };
 
 export const circularProgress = {
-  minWidth: "100px",
-  minHeight: "100px",
-  margin: "25px auto 25px auto",
+  display: "flex",
+  justifyContent: "center",
+  py: 8,
+};
+
+export const testContainerStyle = {
+  position: "relative" as const,
+  minHeight: { xs: "calc(100dvh - 200px)", sm: 480 },
+  display: "flex",
+  flexDirection: "column" as const,
 };
