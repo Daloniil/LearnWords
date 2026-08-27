@@ -59,9 +59,4 @@ export const enterTranslation = [
     ru: "Добавить в словарь",
     en: "Add to dictionary",
   },
-  {
-    title: "pasteFromClipboard",
-    ru: "Вставить из буфера",
-    en: "Paste from clipboard",
-  },
 ];
