@@ -35,32 +35,37 @@ import {
 import { scrollStatsStyle } from "../../Styles/StatsStyle";
 
 const FoldersPage = () => {
-  const { getFolders, deleteFolder, foldersHook } = useFolders();
+  const { deleteFolder, foldersHook, isLoading, isValidating } = useFolders();
   const { checkingLogin } = useLogin();
   const { languageContext } = useLanguage();
   const { learningPair, pairConfig } = useLearningPair();
 
   const [openModal, setOpenModal] = useState(false);
-  const [statusLoading, setStatusLoading] = useState(false);
 
   const translation = (key: string) =>
     setTranslation(key, folderTranslation, languageContext);
 
   const handleCloseModal = () => {
-    setOpenModal(!openModal);
-    getFolders();
+    setOpenModal(false);
   };
 
   useEffect(() => {
     checkingLogin(LoginStatus.OTHER);
-    setStatusLoading(true);
-    getFolders().finally(() => setStatusLoading(false));
   }, [learningPair]);
+
+  const showLoader = isLoading && foldersHook.length === 0;
 
   return (
     <Box sx={pageStack}>
       <PageHeader
         title={translation("folders")}
+        subtitle={
+          isValidating
+            ? languageContext === "english"
+              ? "Updating…"
+              : "Обновление…"
+            : undefined
+        }
         action={
           <Button
             variant="contained"
@@ -73,7 +78,7 @@ const FoldersPage = () => {
         }
       />
 
-      {statusLoading ? (
+      {showLoader ? (
         <Box sx={centeredLoader}>
           <CircularProgress />
         </Box>

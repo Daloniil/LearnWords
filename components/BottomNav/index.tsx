@@ -9,6 +9,7 @@ import {
   Paper,
 } from "@mui/material";
 import { useRouter } from "next/router";
+import { useEffect } from "react";
 import { useLanguage } from "../../hooks/useLanguage";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -59,6 +60,12 @@ export const BottomNav = () => {
   const currentIndex = navItems.findIndex((item) =>
     router.pathname.startsWith(item.path)
   );
+
+  useEffect(() => {
+    navItems.forEach((item) => {
+      router.prefetch(item.path);
+    });
+  }, [router]);
 
   return (
     <Paper

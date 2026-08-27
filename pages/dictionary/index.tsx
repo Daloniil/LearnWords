@@ -11,7 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearch } from "../../hooks/useSearch";
 import { Word } from "../../Interfaces/ProvidersInterface";
 import { EditWord } from "../../components/EditWord";
@@ -40,38 +40,41 @@ const DictionaryPage = () => {
   const { languageContext } = useLanguage();
   const { learningPair, pairConfig } = useLearningPair();
   const { checkingLogin } = useLogin();
-  const { getWord, wordsHook, speakWord } = useWords();
+  const { getWord, wordsHook, speakWord, isLoading, isValidating } = useWords();
   const { addNotification } = useNotification();
 
-  const [words, setWords] = useState([] as Word[]);
   const [editWord, setEditWord] = useState({} as Word);
   const [searchWord, setSearchWord] = useState("");
   const [editId, setEditId] = useState(0);
   const [openModalEdit, setOpenModalEdit] = useState(false);
   const [openModalFolder, setOpenModalFolder] = useState(false);
-  const [statusLoading, setStatusLoadingUser] = useState(false);
   const [selectStatus, setSelectStatus] = useState(false);
   const [selectStatusComp, setSelectStatusComp] = useState([] as boolean[]);
   const [moveWord, setMoveWord] = useState([] as Word[]);
   const [studyMode, setStudyMode] = useState(false);
   const [revealedIds, setRevealedIds] = useState<number[]>([]);
 
+  const words = useMemo(() => {
+    if (!searchWord) return wordsHook;
+    return search(wordsHook, searchWord);
+  }, [wordsHook, searchWord, search]);
+
   const translation = (key: string) =>
     setTranslation(key, dictionaryTranslation, languageContext);
 
-  const emptyStatus = () => {
+  const resetSelection = () => {
     setSelectStatusComp(words.map(() => false));
   };
 
   const clearStatus = (stat?: boolean) => {
     setSelectStatus(stat ?? !selectStatus);
-    emptyStatus();
+    resetSelection();
     setMoveWord([]);
   };
 
   const handleCloseModalEdit = () => {
     setOpenModalEdit(false);
-    getWord();
+    getWord({ force: true });
     clearStatus(false);
   };
 
@@ -113,25 +116,14 @@ const DictionaryPage = () => {
   };
 
   useEffect(() => {
-    if (searchWord) {
-      setWords(search(wordsHook, searchWord));
-    } else {
-      setStatusLoadingUser(true);
-      getWord();
-    }
-  }, [searchWord]);
-
-  useEffect(() => {
-    setWords(wordsHook);
-    setStatusLoadingUser(false);
-    emptyStatus();
+    resetSelection();
   }, [wordsHook]);
 
   useEffect(() => {
     checkingLogin(LoginStatus.OTHER);
-    setStatusLoadingUser(true);
-    getWord();
   }, [learningPair]);
+
+  const showLoader = isLoading && words.length === 0;
 
   return (
     <Box sx={pageStack}>
@@ -139,8 +131,8 @@ const DictionaryPage = () => {
         title={translation(pairConfig.sourceLabelKey) + " / " + translation(pairConfig.targetLabelKey)}
         subtitle={
           languageContext === "english"
-            ? `${words.length} words`
-            : `${words.length} слов`
+            ? `${words.length} words${isValidating ? " · updating…" : ""}`
+            : `${words.length} слов${isValidating ? " · обновление…" : ""}`
         }
         action={
           <Button
@@ -199,7 +191,7 @@ const DictionaryPage = () => {
         </Button>
       ) : null}
 
-      {statusLoading ? (
+      {showLoader ? (
         <Box sx={centeredLoader}>
           <CircularProgress />
         </Box>
@@ -244,7 +236,7 @@ const DictionaryPage = () => {
             editId={editId}
             wordEdit={editWord}
             handleCloseModal={handleCloseModalEdit}
-            setStatusLoadingUser={setStatusLoadingUser}
+            setStatusLoadingUser={() => {}}
           />
         </AppModal>
       </Modal>

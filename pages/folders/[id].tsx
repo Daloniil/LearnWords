@@ -2,7 +2,6 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Router from "next/router";
 import {
   Box,
-  capitalize,
   CircularProgress,
   IconButton,
   InputAdornment,
@@ -13,7 +12,7 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useFolders } from "../../hooks/useFolders";
 import { useLanguage } from "../../hooks/useLanguage";
 import { useLearningPair } from "../../hooks/useLearningPair";
@@ -40,27 +39,36 @@ const FolderPage = () => {
   const router = useRouter();
   const { search } = useSearch();
   const { checkingLogin } = useLogin();
-  const { getFolders, foldersHook } = useFolders();
+  const { foldersHook, isLoading } = useFolders();
   const { languageContext } = useLanguage();
   const { learningPair, pairConfig } = useLearningPair();
   const { speakWord } = useWords();
 
-  const [folderName, setFolderName] = useState("");
-  const [folderId, setFolderId] = useState(0);
-  const [allFolderWords, setAllFolderWords] = useState([] as Word[]);
-  const [folderWord, setFolderWord] = useState([] as Word[]);
   const [searchWord, setSearchWord] = useState("");
-  const [statusLoading, setStatusLoadingUser] = useState(false);
   const [editId, setEditId] = useState(0);
   const [editWord, setEditWord] = useState({} as Word);
   const [openModalEdit, setOpenModalEdit] = useState(false);
+
+  const folderInfo = useMemo(
+    () => foldersHook.find((f) => f.id === Number(router.query.id)),
+    [foldersHook, router.query.id]
+  );
+
+  const allFolderWords = useMemo(() => {
+    if (!folderInfo) return [] as Word[];
+    return getWordArrays(folderInfo, pairConfig).sourceWords;
+  }, [folderInfo, pairConfig]);
+
+  const folderWord = useMemo(() => {
+    if (!searchWord) return allFolderWords;
+    return search(allFolderWords, searchWord);
+  }, [allFolderWords, searchWord, search]);
 
   const translation = (key: string) =>
     setTranslation(key, dictionaryTranslation, languageContext);
 
   const handleCloseModalEdit = () => {
     setOpenModalEdit(false);
-    setTimeout(() => getFolders(), 500);
   };
 
   const setWordModal = (word: Word) => {
@@ -70,42 +78,22 @@ const FolderPage = () => {
   };
 
   useEffect(() => {
-    if (searchWord) {
-      setFolderWord(search(allFolderWords, searchWord));
-    } else {
-      setFolderWord(allFolderWords);
-    }
-  }, [searchWord, allFolderWords]);
-
-  useEffect(() => {
-    if (foldersHook?.length > 0) {
-      const folderInfo = foldersHook.find(
-        (f) => f.id === Number(router.query.id)
-      );
-      if (folderInfo) {
-        setFolderId(folderInfo.id);
-        const { sourceWords } = getWordArrays(folderInfo, pairConfig);
-        setAllFolderWords(sourceWords);
-        setFolderWord(sourceWords);
-        setFolderName(folderInfo.name);
-        setStatusLoadingUser(false);
-      } else {
-        Router.push("/folders");
-      }
-    }
-  }, [foldersHook, learningPair]);
-
-  useEffect(() => {
     checkingLogin(LoginStatus.OTHER);
-    getFolders();
-    setStatusLoadingUser(true);
   }, [learningPair]);
+
+  useEffect(() => {
+    if (!isLoading && foldersHook.length > 0 && !folderInfo) {
+      Router.push("/folders");
+    }
+  }, [foldersHook, folderInfo, isLoading]);
+
+  const showLoader = isLoading && !folderInfo;
 
   return (
     <Box sx={pageStack}>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <Typography variant="h6" sx={{ fontWeight: 700 }}>
-          {folderName}
+          {folderInfo?.name ?? ""}
         </Typography>
         <IconButton onClick={() => Router.push("/folders")} aria-label="back">
           <ArrowBackIcon />
@@ -129,7 +117,7 @@ const FolderPage = () => {
         />
       </Box>
 
-      {statusLoading ? (
+      {showLoader ? (
         <Box sx={centeredLoader}>
           <CircularProgress />
         </Box>
@@ -159,11 +147,11 @@ const FolderPage = () => {
       <Modal open={openModalEdit} onClose={handleCloseModalEdit}>
         <AppModal>
           <EditWord
-            folderId={folderId}
+            folderId={folderInfo?.id ?? 0}
             editId={editId}
             wordEdit={editWord}
             handleCloseModal={handleCloseModalEdit}
-            setStatusLoadingUser={setStatusLoadingUser}
+            setStatusLoadingUser={() => {}}
           />
         </AppModal>
       </Modal>

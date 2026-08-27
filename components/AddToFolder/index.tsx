@@ -10,7 +10,7 @@ import {
     Typography,
 } from "@mui/material";
 import {makeStyles} from "@material-ui/core/styles";
-import {useEffect, useState} from "react";
+import {useState} from "react";
 import {useFolders} from "../../hooks/useFolders";
 import {useLanguage} from "../../hooks/useLanguage";
 import {useTheme} from "../../hooks/useTheme";
@@ -35,7 +35,7 @@ export const AddToFolder = ({
     handleCloseModal: () => void;
     moveWord: Word[];
 }) => {
-    const {getFolders, foldersHook, addWords} = useFolders();
+    const {foldersHook, addWords} = useFolders();
     const {themeContext} = useTheme();
     const {languageContext} = useLanguage();
 
@@ -51,16 +51,11 @@ export const AddToFolder = ({
 
     const handleCloseModalAdd = () => {
         setOpenModal(!openModal);
-        getFolders();
     };
 
     const translation = (key: string) => {
         return setTranslation(key, folderTranslation, languageContext);
     };
-
-    useEffect(() => {
-        getFolders();
-    }, []);
 
     return (
         <>
