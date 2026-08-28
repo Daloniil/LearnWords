@@ -5,6 +5,43 @@ const withPWA = require("next-pwa")({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === "development",
+  // iOS Safari + Workbox often swallows cross-origin AI POSTs (ngrok).
+  // Force network-only so chat/TTS/STT never hit the service worker cache.
+  runtimeCaching: [
+    {
+      urlPattern: ({ url }) =>
+        /ngrok/i.test(url.hostname) ||
+        url.pathname.startsWith("/v1/") ||
+        url.pathname.includes("/audio/") ||
+        url.pathname.includes("/chat/"),
+      handler: "NetworkOnly",
+      method: "GET",
+    },
+    {
+      urlPattern: ({ url }) =>
+        /ngrok/i.test(url.hostname) ||
+        url.pathname.startsWith("/v1/") ||
+        url.pathname.includes("/audio/") ||
+        url.pathname.includes("/chat/"),
+      handler: "NetworkOnly",
+      method: "POST",
+    },
+    {
+      urlPattern: ({ url }) =>
+        url.hostname === "127.0.0.1" || url.hostname === "localhost",
+      handler: "NetworkOnly",
+    },
+    {
+      urlPattern: /^https?.*/,
+      handler: "NetworkFirst",
+      options: {
+        cacheName: "offlineCache",
+        expiration: {
+          maxEntries: 200,
+        },
+      },
+    },
+  ],
 });
 
 const nextConfig = {

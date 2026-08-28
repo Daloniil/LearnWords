@@ -1,4 +1,4 @@
-import { AI_CONFIG, AI_FETCH_HEADERS } from "./aiConfig";
+import { AI_CONFIG, aiFetch } from "./aiConfig";
 
 export type ChatMessage = {
   role: "system" | "user" | "assistant";
@@ -117,22 +117,25 @@ const pickAssistantText = (message?: {
 };
 
 const requestCompletion = async (messages: ChatMessage[]) => {
-  const response = await fetch(`${AI_CONFIG.llmBaseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...AI_FETCH_HEADERS,
+  const response = await aiFetch(
+    `${AI_CONFIG.llmBaseUrl}/chat/completions`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: AI_CONFIG.llmModel,
+        messages,
+        temperature: 0.6,
+        max_tokens: AI_CONFIG.maxReplyTokens,
+        stream: false,
+        enable_thinking: false,
+        chat_template_kwargs: { enable_thinking: false },
+      }),
     },
-    body: JSON.stringify({
-      model: AI_CONFIG.llmModel,
-      messages,
-      temperature: 0.6,
-      max_tokens: AI_CONFIG.maxReplyTokens,
-      stream: false,
-      enable_thinking: false,
-      chat_template_kwargs: { enable_thinking: false },
-    }),
-  });
+    AI_CONFIG.llmTimeoutMs
+  );
 
   if (!response.ok) {
     let detail = `LLM error ${response.status}`;

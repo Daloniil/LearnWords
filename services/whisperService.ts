@@ -1,4 +1,4 @@
-import { AI_CONFIG, AI_FETCH_HEADERS } from "./aiConfig";
+import { AI_CONFIG, aiFetch } from "./aiConfig";
 
 type TranscribeOptions = {
   language?: string | null;
@@ -34,11 +34,14 @@ export const transcribeAudio = async (
     form.append("prompt", options.prompt);
   }
 
-  const response = await fetch(AI_CONFIG.whisperUrl, {
-    method: "POST",
-    headers: AI_FETCH_HEADERS,
-    body: form,
-  });
+  const response = await aiFetch(
+    AI_CONFIG.whisperUrl,
+    {
+      method: "POST",
+      body: form,
+    },
+    AI_CONFIG.whisperTimeoutMs
+  );
 
   if (!response.ok) {
     let detail = `Whisper error ${response.status}`;

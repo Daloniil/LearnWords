@@ -1,4 +1,4 @@
-import { AI_CONFIG, AI_FETCH_HEADERS } from "../services/aiConfig";
+import { AI_CONFIG, aiFetch } from "../services/aiConfig";
 
 const PREFERRED_VOICE_NAMES = [
   /milena/i,
@@ -143,18 +143,21 @@ const speakWithLocalTts = async (
   language = "ru",
   foreignLanguage?: string
 ) => {
-  const response = await fetch(AI_CONFIG.ttsUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...AI_FETCH_HEADERS,
+  const response = await aiFetch(
+    AI_CONFIG.ttsUrl,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        input: text,
+        language,
+        foreign_language: foreignLanguage || undefined,
+      }),
     },
-    body: JSON.stringify({
-      input: text,
-      language,
-      foreign_language: foreignLanguage || undefined,
-    }),
-  });
+    AI_CONFIG.ttsTimeoutMs
+  );
 
   if (!response.ok) {
     throw new Error(`TTS error ${response.status}`);
