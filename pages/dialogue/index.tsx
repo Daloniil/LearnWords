@@ -28,6 +28,7 @@ import { useNotification } from "../../hooks/useNotification";
 import { useWords } from "../../hooks/useWords";
 import { LoginStatus, NotificationKeys } from "../../services/localKey";
 import { ChatMessage, chatWithLocalLlm } from "../../services/llmService";
+import { AI_CONFIG, aiFetch } from "../../services/aiConfig";
 import {
   buildMixedSpeechPrompt,
   transcribeAudio,
@@ -74,6 +75,7 @@ const DialoguePage = () => {
   const [phase, setPhase] = useState<Phase>("idle");
   const [showText, setShowText] = useState(false);
   const [micEnabled, setMicEnabled] = useState(true);
+  const [micArmed, setMicArmed] = useState(false);
   const [turns, setTurns] = useState<DialogueTurn[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const busyRef = useRef(false);
@@ -173,12 +175,9 @@ const DialoguePage = () => {
     [addNotification, appendTurn, pairConfig.sourceLang, translation, wordsHook]
   );
 
-  const autoListenEnabled = micEnabled && phase !== "idle";
-  const listenPaused =
-    phase === "speaking" ||
-    phase === "thinking" ||
-    phase === "transcribing" ||
-    phase === "starting";
+  // Arm mic only after intro — avoids iOS permission dialog blocking LLM start.
+  const autoListenEnabled = micEnabled && micArmed;
+  const listenPaused = phase !== "ready";
 
   const { listenState, level, resumeAudioContext } = useAutoVoiceListen({
     enabled: autoListenEnabled,
@@ -195,6 +194,7 @@ const DialoguePage = () => {
     busyRef.current = false;
     sessionActiveRef.current = false;
     setMicEnabled(true);
+    setMicArmed(false);
     setTurns([]);
     setMessages([]);
     messagesRef.current = [];
@@ -212,14 +212,13 @@ const DialoguePage = () => {
     if (busyRef.current || !wordsHook.length) return;
     busyRef.current = true;
     sessionActiveRef.current = true;
+    setMicArmed(false);
     setPhase("starting");
     setTurns([]);
     setMessages([]);
     messagesRef.current = [];
 
     try {
-      await unlockAudioSession();
-
       const practiceWords = pickPracticeWords(wordsHook);
       const welcome = buildWelcomeText(pairConfig);
       const system = buildDialogueSystemPrompt(practiceWords, pairConfig);
@@ -229,8 +228,18 @@ const DialoguePage = () => {
         { role: "user", content: buildFirstQuestionUserPrompt(learningPair) },
       ];
 
-      // Start LLM while welcome is speaking.
+      // Prove network path early (shows up in API logs immediately).
+      void aiFetch(
+        `${AI_CONFIG.llmBaseUrl.replace(/\/v1\/?$/, "")}/health`,
+        { method: "GET" },
+        8_000
+      ).catch(() => undefined);
+
+      // Kick LLM first — never wait on audio/mic unlock before the network call.
       const firstQuestionPromise = chatWithLocalLlm(seed);
+
+      // Best-effort iOS audio unlock; must not block the dialogue pipeline.
+      void unlockAudioSession();
 
       appendTurn("assistant", welcome);
       setPhase("speaking");
@@ -254,11 +263,20 @@ const DialoguePage = () => {
       setPhase("speaking");
       await speakRussian(firstQuestion, "ru", pairConfig.sourceLang);
       await resumeAudioContextRef.current();
+      setMicArmed(true);
       setPhase("ready");
     } catch (error) {
       sessionActiveRef.current = false;
+      setMicArmed(false);
       setPhase("idle");
-      addNotification(translation("errorLlm"), NotificationKeys.ERROR);
+      const message =
+        error instanceof Error ? error.message : translation("errorLlm");
+      addNotification(
+        /timed out|fetch|network|Failed/i.test(message)
+          ? message
+          : translation("errorLlm"),
+        NotificationKeys.ERROR
+      );
     } finally {
       busyRef.current = false;
     }

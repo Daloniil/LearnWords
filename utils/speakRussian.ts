@@ -30,40 +30,50 @@ const getAudioContextCtor = () => {
   );
 };
 
-/** Call from a user tap (Start). Unlocks iOS Safari audio playback. */
+/** Call from a user tap (Start). Unlocks iOS Safari audio playback. Never blocks long. */
 export const unlockAudioSession = async () => {
   if (typeof window === "undefined") return;
 
-  const Ctor = getAudioContextCtor();
-  if (Ctor) {
-    if (!unlockCtx || unlockCtx.state === "closed") {
-      unlockCtx = new Ctor();
+  const run = async () => {
+    const Ctor = getAudioContextCtor();
+    if (Ctor) {
+      if (!unlockCtx || unlockCtx.state === "closed") {
+        unlockCtx = new Ctor();
+      }
+      if (unlockCtx.state === "suspended") {
+        await unlockCtx.resume().catch(() => undefined);
+      }
+      try {
+        const buffer = unlockCtx.createBuffer(1, 1, 22050);
+        const source = unlockCtx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(unlockCtx.destination);
+        source.start(0);
+      } catch {
+        // ignore
+      }
     }
-    if (unlockCtx.state === "suspended") {
-      await unlockCtx.resume().catch(() => undefined);
-    }
+
     try {
-      const buffer = unlockCtx.createBuffer(1, 1, 22050);
-      const source = unlockCtx.createBufferSource();
-      source.buffer = buffer;
-      source.connect(unlockCtx.destination);
-      source.start(0);
+      const silent = new Audio(
+        "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA="
+      );
+      silent.volume = 0.01;
+      (silent as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
+      await Promise.race([
+        silent.play().catch(() => undefined),
+        new Promise<void>((resolve) => setTimeout(resolve, 200)),
+      ]);
+      silent.pause();
     } catch {
       // ignore
     }
-  }
+  };
 
-  try {
-    const silent = new Audio(
-      "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA="
-    );
-    silent.volume = 0.01;
-    (silent as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
-    await silent.play().catch(() => undefined);
-    silent.pause();
-  } catch {
-    // ignore
-  }
+  await Promise.race([
+    run(),
+    new Promise<void>((resolve) => setTimeout(resolve, 400)),
+  ]);
 };
 
 const pickRussianVoice = (): SpeechSynthesisVoice | null => {
