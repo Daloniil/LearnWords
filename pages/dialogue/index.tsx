@@ -130,28 +130,38 @@ const DialoguePage = () => {
     ]);
   }, []);
 
+  const setPhaseSafe = useCallback((next: Phase) => {
+    phaseRef.current = next;
+    setPhase(next);
+  }, []);
+
   const armListening = useCallback(() => {
-    if (
-      !sessionActiveRef.current ||
-      !micEnabledRef.current ||
-      phaseRef.current !== "ready"
-    ) {
-      return;
-    }
-    voiceSession.beginListening();
+    if (!sessionActiveRef.current || !micEnabledRef.current) return;
+    if (phaseRef.current !== "ready") return;
+    // Small delay lets iOS finish TTS audio graph before VAD resumes.
+    window.setTimeout(() => {
+      if (
+        !sessionActiveRef.current ||
+        !micEnabledRef.current ||
+        phaseRef.current !== "ready"
+      ) {
+        return;
+      }
+      voiceSession.beginListening();
+    }, 200);
   }, []);
 
   const speakTutor = useCallback(
     async (text: string) => {
       setPendingSpeechBlob(null);
-      setPhase("speaking");
+      setPhaseSafe("speaking");
       voiceSession.pauseListening();
       const result = await speakRussian(text, "ru", pairConfig.sourceLang);
       if (!result.ok && result.blob.size > 0) {
         setPendingSpeechBlob(result.blob);
       }
     },
-    [pairConfig.sourceLang]
+    [pairConfig.sourceLang, setPhaseSafe]
   );
 
   const handleUtterance = useCallback(
@@ -159,7 +169,7 @@ const DialoguePage = () => {
       if (busyRef.current || !sessionActiveRef.current) return;
       busyRef.current = true;
       setUserSpeaking(false);
-      setPhase("transcribing");
+      setPhaseSafe("transcribing");
       voiceSession.pauseListening();
 
       try {
@@ -171,7 +181,7 @@ const DialoguePage = () => {
           ),
         });
         if (!text.trim()) {
-          setPhase("ready");
+          setPhaseSafe("ready");
           armListening();
           return;
         }
@@ -183,7 +193,7 @@ const DialoguePage = () => {
           { role: "user", content: buildContinueUserPrompt(text) },
         ];
 
-        setPhase("thinking");
+        setPhaseSafe("thinking");
         const reply = await chatWithLocalLlm(nextMessages);
         const saved = [
           ...history,
@@ -195,7 +205,7 @@ const DialoguePage = () => {
         appendTurn("assistant", reply);
 
         await speakTutor(reply);
-        setPhase("ready");
+        setPhaseSafe("ready");
         armListening();
       } catch (error) {
         const message =
@@ -207,8 +217,12 @@ const DialoguePage = () => {
           isWhisper ? translation("errorWhisper") : translation("errorGeneric"),
           NotificationKeys.ERROR
         );
-        setPhase(sessionActiveRef.current ? "ready" : "idle");
-        if (sessionActiveRef.current) armListening();
+        if (sessionActiveRef.current) {
+          setPhaseSafe("ready");
+          armListening();
+        } else {
+          setPhaseSafe("idle");
+        }
       } finally {
         busyRef.current = false;
       }
@@ -218,6 +232,7 @@ const DialoguePage = () => {
       appendTurn,
       armListening,
       pairConfig.sourceLang,
+      setPhaseSafe,
       speakTutor,
       translation,
       wordsHook,
@@ -247,7 +262,7 @@ const DialoguePage = () => {
     setTurns([]);
     setMessages([]);
     messagesRef.current = [];
-    setPhase("idle");
+    setPhaseSafe("idle");
     void voiceSession.end();
   };
 
@@ -270,14 +285,14 @@ const DialoguePage = () => {
   const playPendingSpeech = async () => {
     if (!pendingSpeechBlob) return;
     try {
-      setPhase("speaking");
+      setPhaseSafe("speaking");
       await playSpeechBlob(pendingSpeechBlob);
       setPendingSpeechBlob(null);
-      setPhase("ready");
+      setPhaseSafe("ready");
       armListening();
     } catch {
       addNotification(translation("errorGeneric"), NotificationKeys.ERROR);
-      setPhase("ready");
+      setPhaseSafe("ready");
       armListening();
     }
   };
@@ -287,7 +302,7 @@ const DialoguePage = () => {
     busyRef.current = true;
     sessionActiveRef.current = true;
     setPendingSpeechBlob(null);
-    setPhase("starting");
+    setPhaseSafe("starting");
     setTurns([]);
     setMessages([]);
     messagesRef.current = [];
@@ -315,7 +330,7 @@ const DialoguePage = () => {
       appendTurn("assistant", welcome);
       await speakTutor(welcome);
 
-      setPhase("thinking");
+      setPhaseSafe("thinking");
       const firstQuestion = await firstQuestionPromise;
       const nextMessages: ChatMessage[] = [
         { role: "system", content: system },
@@ -330,11 +345,11 @@ const DialoguePage = () => {
       appendTurn("assistant", firstQuestion);
 
       await speakTutor(firstQuestion);
-      setPhase("ready");
+      setPhaseSafe("ready");
       armListening();
     } catch (error) {
       sessionActiveRef.current = false;
-      setPhase("idle");
+      setPhaseSafe("idle");
       void voiceSession.end();
       const message =
         error instanceof Error ? error.message : translation("errorLlm");

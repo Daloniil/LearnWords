@@ -109,9 +109,14 @@ class VoiceSession {
   }
 
   beginListening() {
-    if (!this.isReady || this.listening) return;
+    if (!this.isReady) return;
     this.listening = true;
     this.speechStartedAt = null;
+    this.processing = false;
+    if (this.raf !== null) {
+      cancelAnimationFrame(this.raf);
+      this.raf = null;
+    }
     this.tick();
   }
 
@@ -293,7 +298,7 @@ class VoiceSession {
     this.chunks = [];
 
     try {
-      if (blob && blob.size > 1200 && this.onUtterance && this.listening) {
+      if (blob && blob.size > 1200 && this.onUtterance) {
         // Pause VAD while the dialogue pipeline runs (STT → LLM → TTS).
         this.pauseListening();
         await this.onUtterance(blob);
@@ -304,10 +309,13 @@ class VoiceSession {
   }
 
   private tick = () => {
-    if (!this.listening || !this.analyser || this.speaking || this.processing) {
-      if (this.listening && !this.speaking && !this.processing) {
-        this.raf = requestAnimationFrame(this.tick);
-      }
+    if (!this.listening) {
+      return;
+    }
+
+    // Keep the loop alive while TTS/STT runs; otherwise mic never recovers.
+    if (!this.analyser || this.speaking || this.processing) {
+      this.raf = requestAnimationFrame(this.tick);
       return;
     }
 
