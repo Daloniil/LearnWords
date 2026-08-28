@@ -10,6 +10,11 @@ export const paths = [
     pathName: "/dictionary",
   },
   {
+    en: "Dialogue",
+    ru: "Диалог",
+    pathName: "/dialogue",
+  },
+  {
     en: "Folders Word",
     ru: "Папки Слов",
     pathName: "/folders",

@@ -1,34 +1,117 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# LearnWords
 
-## Getting Started
+Приложение для изучения слов (EN↔RU / ES↔RU) с тестами и голосовым диалогом.
 
-First, run the development server:
+## Локальный AI (для вкладки «Диалог»)
+
+Нужны **три** сервиса:
+
+1. **LM Studio** — LLM (`qwen2.5-14b-instruct-mlx`) на `http://127.0.0.1:1234`
+2. **Whisper + Silero API** — STT и TTS на `http://127.0.0.1:8000`
+3. **Next.js** — само приложение на `http://localhost:3000`
+
+Код API лежит отдельно: `~/whisper-api`  
+(Whisper STT + Silero TTS в одном сервере).
+
+---
+
+### Whisper + Silero — установка (один раз)
 
 ```bash
-npm run dev
-# or
-yarn dev
+cd ~/whisper-api
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Нужен также `ffmpeg`:
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+```bash
+brew install ffmpeg
+```
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+Модель Whisper по умолчанию:
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+```text
+~/.lmstudio/models/mlx-community/whisper-large-v3-turbo
+```
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+### Whisper + Silero — запуск
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+cd ~/whisper-api
+./start.sh
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+Или вручную:
 
-## Deploy on Vercel
+```bash
+cd ~/whisper-api
+source .venv/bin/activate
+export WHISPER_MODEL_PATH="$HOME/.lmstudio/models/mlx-community/whisper-large-v3-turbo"
+python server.py
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Сервер поднимется на:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+- Health: `http://127.0.0.1:8000/health`
+- Whisper STT: `POST http://127.0.0.1:8000/v1/audio/transcriptions`
+- Silero TTS: `POST http://127.0.0.1:8000/v1/audio/speech`  
+  Языки: `ru`, `en`, `es`
+
+### Проверка
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+Распознавание:
+
+```bash
+curl http://127.0.0.1:8000/v1/audio/transcriptions \
+  -F "file=@/path/to/audio.wav" \
+  -F "model=whisper-1"
+```
+
+Озвучка (Silero):
+
+```bash
+curl http://127.0.0.1:8000/v1/audio/speech \
+  -H "Content-Type: application/json" \
+  -d '{"input":"Привет! Я твой репетитор.","language":"ru"}' \
+  --output speech_ru.mp3
+
+curl http://127.0.0.1:8000/v1/audio/speech \
+  -H "Content-Type: application/json" \
+  -d '{"input":"Hello, how are you?","language":"en"}' \
+  --output speech_en.mp3
+
+curl http://127.0.0.1:8000/v1/audio/speech \
+  -H "Content-Type: application/json" \
+  -d '{"input":"Hola, ¿cómo estás?","language":"es"}' \
+  --output speech_es.mp3
+```
+
+### Остановка
+
+В терминале, где запущен сервер: `Ctrl+C`.
+
+---
+
+## Приложение LearnWords
+
+```bash
+cd ~/Desktop/LearnWords
+npm install
+npm run dev
+```
+
+Открой [http://localhost:3000](http://localhost:3000).
+
+Перед голосовым диалогом:
+
+1. Запусти LM Studio Local Server (`http://127.0.0.1:1234`) с моделью `qwen2.5-14b-instruct-mlx`
+2. Запусти Whisper + Silero (`./start.sh` в `~/whisper-api`)
+3. В LM Studio включи **CORS** для `http://localhost:3000`

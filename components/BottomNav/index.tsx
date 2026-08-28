@@ -2,6 +2,7 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
 import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
 import QuizOutlinedIcon from "@mui/icons-material/QuizOutlined";
+import RecordVoiceOverOutlinedIcon from "@mui/icons-material/RecordVoiceOverOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import {
   BottomNavigation,
@@ -22,9 +23,15 @@ const navItems = [
   },
   {
     path: "/dictionary",
-    en: "Dictionary",
-    ru: "Словарь",
+    en: "Words",
+    ru: "Слова",
     icon: MenuBookOutlinedIcon,
+  },
+  {
+    path: "/dialogue",
+    en: "Talk",
+    ru: "Диалог",
+    icon: RecordVoiceOverOutlinedIcon,
   },
   {
     path: "/test",
@@ -41,7 +48,7 @@ const navItems = [
   {
     path: "/settings",
     en: "Settings",
-    ru: "Настройки",
+    ru: "Ещё",
     icon: SettingsOutlinedIcon,
   },
 ];
