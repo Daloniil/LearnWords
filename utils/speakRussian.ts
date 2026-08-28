@@ -148,6 +148,98 @@ const prepareAudioElement = (audio: HTMLAudioElement) => {
   audio.preload = "auto";
 };
 
+const playBlobWithWebAudio = async (blob: Blob) => {
+  const Ctor =
+    window.AudioContext ||
+    (
+      window as Window & {
+        webkitAudioContext?: typeof AudioContext;
+      }
+    ).webkitAudioContext;
+  if (!Ctor) {
+    throw new Error("Web Audio unavailable");
+  }
+
+  const ctx = new Ctor();
+  try {
+    if (ctx.state === "suspended") {
+      await ctx.resume();
+    }
+    const arrayBuffer = await blob.arrayBuffer();
+    const audioBuffer = await new Promise<AudioBuffer>((resolve, reject) => {
+      let settled = false;
+      const ok = (buffer: AudioBuffer) => {
+        if (settled) return;
+        settled = true;
+        resolve(buffer);
+      };
+      const fail = (error?: DOMException | string) => {
+        if (settled) return;
+        settled = true;
+        reject(error || new Error("decodeAudioData failed"));
+      };
+      try {
+        const maybePromise = ctx.decodeAudioData(
+          arrayBuffer.slice(0),
+          ok,
+          fail
+        ) as Promise<AudioBuffer> | void;
+        if (maybePromise && typeof maybePromise.then === "function") {
+          maybePromise.then(ok, fail);
+        }
+      } catch (error) {
+        fail(error as DOMException);
+      }
+    });
+
+    await new Promise<void>((resolve, reject) => {
+      const source = ctx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(ctx.destination);
+      source.onended = () => resolve();
+      try {
+        source.start(0);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  } finally {
+    try {
+      await ctx.close();
+    } catch {
+      // ignore
+    }
+  }
+};
+
+const playBlobWithHtmlAudio = async (blob: Blob) => {
+  const url = URL.createObjectURL(blob);
+  await new Promise<void>((resolve, reject) => {
+    const audio = new Audio();
+    prepareAudioElement(audio);
+    audio.src = url;
+    currentAudio = audio;
+
+    const finish = () => {
+      URL.revokeObjectURL(url);
+      if (currentAudio === audio) currentAudio = null;
+    };
+
+    audio.onended = () => {
+      finish();
+      resolve();
+    };
+    audio.onerror = () => {
+      finish();
+      reject(new Error("Audio playback failed"));
+    };
+    audio.play().catch((error) => {
+      finish();
+      reject(error);
+    });
+  });
+};
+
 const speakWithLocalTts = async (
   text: string,
   language = "ru",
@@ -174,32 +266,13 @@ const speakWithLocalTts = async (
   }
 
   const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
 
-  await new Promise<void>((resolve, reject) => {
-    const audio = new Audio();
-    prepareAudioElement(audio);
-    audio.src = url;
-    currentAudio = audio;
-
-    const finish = () => {
-      URL.revokeObjectURL(url);
-      if (currentAudio === audio) currentAudio = null;
-    };
-
-    audio.onended = () => {
-      finish();
-      resolve();
-    };
-    audio.onerror = () => {
-      finish();
-      reject(new Error("Audio playback failed"));
-    };
-    audio.play().catch((error) => {
-      finish();
-      reject(error);
-    });
-  });
+  // Prefer a fresh Web Audio context — more reliable on iOS after mic use.
+  try {
+    await playBlobWithWebAudio(blob);
+  } catch {
+    await playBlobWithHtmlAudio(blob);
+  }
 };
 
 export const speakRussian = async (

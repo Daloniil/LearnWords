@@ -21,6 +21,7 @@ import { PageHeader } from "../../components/PageHeader";
 import { VoiceOrb } from "../../components/VoiceOrb";
 import { useAuth } from "../../hooks/useAuth";
 import { useAutoVoiceListen } from "../../hooks/useAutoVoiceListen";
+import { usePressToTalk } from "../../hooks/usePressToTalk";
 import { useLanguage } from "../../hooks/useLanguage";
 import { useLearningPair } from "../../hooks/useLearningPair";
 import { useLogin } from "../../hooks/useLogin";
@@ -42,6 +43,7 @@ import {
   buildWelcomeText,
   pickPracticeWords,
 } from "../../utils/dialoguePrompt";
+import { isIOSDevice } from "../../utils/isIOS";
 import { setTranslation } from "../../utils/setTranslation";
 import {
   speakRussian,
@@ -76,6 +78,7 @@ const DialoguePage = () => {
   const [showText, setShowText] = useState(false);
   const [micEnabled, setMicEnabled] = useState(true);
   const [micArmed, setMicArmed] = useState(false);
+  const [isIOS] = useState(() => isIOSDevice());
   const [turns, setTurns] = useState<DialogueTurn[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const busyRef = useRef(false);
@@ -177,16 +180,27 @@ const DialoguePage = () => {
     [addNotification, appendTurn, pairConfig.sourceLang, translation, wordsHook]
   );
 
-  // Arm mic only after intro — avoids iOS permission dialog blocking LLM start.
-  const autoListenEnabled = micEnabled && micArmed;
+  const autoListenEnabled = !isIOS && micEnabled && micArmed;
   const listenPaused = phase !== "ready";
 
-  const { listenState, level, resumeAudioContext, releaseForPlayback } =
+  const { listenState, level: autoLevel, resumeAudioContext, releaseForPlayback } =
     useAutoVoiceListen({
       enabled: autoListenEnabled,
       paused: listenPaused,
       onUtterance: handleUtterance,
     });
+
+  const {
+    level: pressLevel,
+    startTalking,
+    stopTalking,
+    isRecording,
+  } = usePressToTalk({
+    enabled: isIOS && micEnabled && phase === "ready",
+    onUtterance: handleUtterance,
+  });
+
+  const level = isIOS ? pressLevel : autoLevel;
 
   useEffect(() => {
     resumeAudioContextRef.current = resumeAudioContext;
@@ -272,8 +286,10 @@ const DialoguePage = () => {
       await releaseForPlaybackRef.current();
       await speakRussian(firstQuestion, "ru", pairConfig.sourceLang);
       await resumeAudioContextRef.current();
-      // Mic only after all intro audio finished — avoids killing TTS on iOS.
-      setMicArmed(true);
+      // Continuous mic only on desktop. iOS uses hold-to-talk after intro.
+      if (!isIOS) {
+        setMicArmed(true);
+      }
       setPhase("ready");
     } catch (error) {
       sessionActiveRef.current = false;
@@ -293,6 +309,10 @@ const DialoguePage = () => {
   };
 
   const statusLabel = (() => {
+    if (isIOS && phase === "ready") {
+      if (isRecording) return translation("recording");
+      return translation("holdToTalkReady");
+    }
     if (!micEnabled && phase === "ready") {
       return translation("micOff");
     }
@@ -340,7 +360,9 @@ const DialoguePage = () => {
     );
   }
 
-  const isUserSpeaking = listenState === "speech";
+  const isUserSpeaking = isIOS
+    ? isRecording
+    : listenState === "speech";
   const lastTurn = turns[turns.length - 1];
   const isAssistantSpeaking =
     phase === "speaking" && lastTurn?.role === "assistant";
@@ -353,6 +375,13 @@ const DialoguePage = () => {
       : phase === "thinking" || phase === "transcribing" || phase === "starting"
       ? "thinking"
       : "idle";
+
+  const micDisabled =
+    phase === "idle" && !turns.length
+      ? true
+      : isIOS
+      ? phase !== "ready"
+      : false;
 
   return (
     <Box
@@ -407,7 +436,9 @@ const DialoguePage = () => {
                 {translation("subtitle")}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {translation("autoListenHint")}
+                {isIOS
+                  ? translation("holdToTalkHint")
+                  : translation("autoListenHint")}
               </Typography>
               <Button
                 variant="contained"
@@ -466,14 +497,38 @@ const DialoguePage = () => {
         <Stack spacing={1.75} alignItems="center">
           <MicRipple active={isUserSpeaking && micEnabled} level={level}>
             <Fab
-              color={micEnabled ? "primary" : "default"}
-              onClick={toggleMic}
-              disabled={phase === "idle" && !turns.length}
-              aria-label={
-                micEnabled ? translation("muteMic") : translation("unmuteMic")
+              color={isRecording || micEnabled ? "primary" : "default"}
+              disabled={micDisabled}
+              onClick={isIOS ? undefined : toggleMic}
+              onPointerDown={
+                isIOS
+                  ? (event) => {
+                      event.preventDefault();
+                      if (phase === "ready" && micEnabled) {
+                        void startTalking();
+                      }
+                    }
+                  : undefined
               }
+              onPointerUp={isIOS ? () => void stopTalking() : undefined}
+              onPointerCancel={isIOS ? () => void stopTalking() : undefined}
+              onPointerLeave={isIOS ? () => void stopTalking() : undefined}
+              onContextMenu={isIOS ? (event) => event.preventDefault() : undefined}
+              aria-label={
+                isIOS
+                  ? translation("holdToTalkReady")
+                  : micEnabled
+                  ? translation("muteMic")
+                  : translation("unmuteMic")
+              }
+              sx={{
+                touchAction: "none",
+                userSelect: "none",
+                WebkitUserSelect: "none",
+                transform: isRecording ? "scale(1.08)" : "none",
+              }}
             >
-              {micEnabled ? <MicIcon /> : <MicOffIcon />}
+              {isIOS || micEnabled ? <MicIcon /> : <MicOffIcon />}
             </Fab>
           </MicRipple>
 
@@ -495,7 +550,11 @@ const DialoguePage = () => {
           color="text.secondary"
           sx={{ mt: 1.25, display: "block" }}
         >
-          {micEnabled ? translation("micOnHint") : translation("micOffHint")}
+          {isIOS
+            ? translation("holdToTalkHint")
+            : micEnabled
+            ? translation("micOnHint")
+            : translation("micOffHint")}
         </Typography>
       </Box>
     </Box>

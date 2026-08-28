@@ -25,9 +25,19 @@ export const dialogueTranslation = [
     ru: "Начать диалог",
   },
   {
-    title: "holdToTalk",
-    en: "Speak after the tutor",
-    ru: "Говори после репетитора",
+    title: "holdToTalkHint",
+    en: "Hold the mic button to speak, then release",
+    ru: "Удерживай кнопку микрофона, говори, затем отпусти",
+  },
+  {
+    title: "holdToTalkReady",
+    en: "Hold mic to answer",
+    ru: "Удерживай микрофон, чтобы ответить",
+  },
+  {
+    title: "recording",
+    en: "Recording… release to send",
+    ru: "Запись… отпусти, чтобы отправить",
   },
   {
     title: "tapToStop",
