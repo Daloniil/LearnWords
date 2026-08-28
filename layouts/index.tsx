@@ -33,7 +33,7 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <ThemeProvider theme={theme}>
-      <Box sx={{ display: "flex", minHeight: "100dvh", bgcolor: "background.default" }}>
+      <Box sx={{ display: "flex", height: "100dvh", bgcolor: "background.default" }}>
         <CssBaseline />
 
         <Box
@@ -41,16 +41,26 @@ const Layout = ({ children }: LayoutProps) => {
           sx={{
             flexGrow: 1,
             width: "100%",
-            minHeight: "100dvh",
-            overflow: "auto",
+            height: "100dvh",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           <Container
             maxWidth="sm"
             sx={{
+              flex: 1,
+              minHeight: 0,
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
               px: { xs: 1.5, sm: 2 },
               pt: { xs: 1.5, sm: 2 },
-              pb: { xs: "calc(64px + env(safe-area-inset-bottom))", sm: 2 },
+              pb: {
+                xs: "calc(56px + env(safe-area-inset-bottom) + 12px)",
+                sm: 2,
+              },
             }}
           >
             {children}

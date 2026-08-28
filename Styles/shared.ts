@@ -5,6 +5,18 @@ export const pageStack: SxProps<Theme> = {
   flexDirection: "column",
   gap: 2,
   pb: 1,
+  flex: 1,
+  minHeight: 0,
+  overflowY: "auto",
+};
+
+export const pageFill: SxProps<Theme> = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 2,
+  flex: 1,
+  minHeight: 0,
+  overflow: "hidden",
 };
 
 export const surfaceCard: SxProps<Theme> = {
@@ -74,6 +86,18 @@ export const scrollList: SxProps<Theme> = {
   pr: 0.5,
 };
 
+export const scrollListFill: SxProps<Theme> = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 1.5,
+  flex: 1,
+  minHeight: 0,
+  overflowY: "auto",
+  pr: 0.5,
+  pb: 1,
+  WebkitOverflowScrolling: "touch",
+};
+
 export const centeredLoader: SxProps<Theme> = {
   display: "flex",
   justifyContent: "center",
@@ -86,5 +110,8 @@ export const toolbarSpacer: SxProps<Theme> = {
 };
 
 export const bottomNavOffset: SxProps<Theme> = {
-  pb: { xs: "calc(64px + env(safe-area-inset-bottom))", sm: 2 },
+  pb: {
+    xs: "calc(56px + env(safe-area-inset-bottom) + 12px)",
+    sm: 2,
+  },
 };

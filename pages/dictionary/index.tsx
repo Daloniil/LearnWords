@@ -5,7 +5,6 @@ import {
   FormControlLabel,
   InputAdornment,
   Modal,
-  Stack,
   Switch,
   TextField,
   Typography,
@@ -30,8 +29,8 @@ import { WordCard } from "../../components/WordCard";
 import { AppModal } from "../../components/AppModal";
 import {
   centeredLoader,
-  pageStack,
-  scrollList,
+  pageFill,
+  scrollListFill,
   surfaceCard,
 } from "../../Styles/shared";
 
@@ -57,6 +56,7 @@ const DictionaryPage = () => {
   const [revealedIds, setRevealedIds] = useState<number[]>([]);
   const [visibleCount, setVisibleCount] = useState(WORDS_PAGE_SIZE);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const scrollListRef = useRef<HTMLDivElement | null>(null);
 
   const words = useMemo(() => {
     if (!searchWord) return wordsHook;
@@ -144,9 +144,8 @@ const DictionaryPage = () => {
 
   useEffect(() => {
     const sentinel = loadMoreRef.current;
-    if (!sentinel || !hasMoreWords) return;
-
-    const scrollRoot = sentinel.closest("main");
+    const scrollRoot = scrollListRef.current;
+    if (!sentinel || !scrollRoot || !hasMoreWords) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -170,7 +169,7 @@ const DictionaryPage = () => {
   const showLoader = isLoading && words.length === 0;
 
   return (
-    <Box sx={pageStack}>
+    <Box sx={pageFill}>
       <PageHeader
         title={translation(pairConfig.sourceLabelKey) + " / " + translation(pairConfig.targetLabelKey)}
         subtitle={
@@ -253,26 +252,24 @@ const DictionaryPage = () => {
           }
         />
       ) : (
-        <Stack spacing={1.5}>
-          <Stack sx={scrollList}>
-            {visibleWords.map((item, index) => (
-              <WordCard
-                key={`${item.id}-${item.word}`}
-                word={item}
-                sourceLang={pairConfig.sourceLang}
-                targetLang={pairConfig.targetLang}
-                onPress={() => setWordModal(item)}
-                onSpeak={() => speakWord(item.word)}
-                selectable={selectStatus}
-                selected={selectStatusComp[index]}
-                onToggleSelect={() => clickSelectButton(index, item)}
-                blurTarget={studyMode}
-                targetRevealed={revealedIds.includes(item.id)}
-                onRevealTarget={() => revealTranslation(item.id)}
-                revealHint={translation("tapToReveal")}
-              />
-            ))}
-          </Stack>
+        <Box ref={scrollListRef} sx={scrollListFill}>
+          {visibleWords.map((item, index) => (
+            <WordCard
+              key={`${item.id}-${item.word}`}
+              word={item}
+              sourceLang={pairConfig.sourceLang}
+              targetLang={pairConfig.targetLang}
+              onPress={() => setWordModal(item)}
+              onSpeak={() => speakWord(item.word)}
+              selectable={selectStatus}
+              selected={selectStatusComp[index]}
+              onToggleSelect={() => clickSelectButton(index, item)}
+              blurTarget={studyMode}
+              targetRevealed={revealedIds.includes(item.id)}
+              onRevealTarget={() => revealTranslation(item.id)}
+              revealHint={translation("tapToReveal")}
+            />
+          ))}
 
           {hasMoreWords ? (
             <Box
@@ -298,7 +295,7 @@ const DictionaryPage = () => {
               {showingWordsLabel}
             </Typography>
           ) : null}
-        </Stack>
+        </Box>
       )}
 
       <Modal open={openModalEdit} onClose={() => setOpenModalEdit(false)}>
