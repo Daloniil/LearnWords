@@ -1,7 +1,7 @@
+import CallEndIcon from "@mui/icons-material/CallEnd";
 import MicIcon from "@mui/icons-material/Mic";
 import MicOffIcon from "@mui/icons-material/MicOff";
 import RecordVoiceOverIcon from "@mui/icons-material/RecordVoiceOver";
-import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import {
@@ -177,15 +177,19 @@ const DialoguePage = () => {
     onUtterance: handleUtterance,
   });
 
-  const resetDialogue = () => {
+  const endDialogue = () => {
     stopSpeaking();
     busyRef.current = false;
     sessionActiveRef.current = false;
+    setMicEnabled(true);
     setTurns([]);
     setMessages([]);
     messagesRef.current = [];
     setPhase("idle");
   };
+
+  const isSessionActive =
+    phase !== "idle" || turns.length > 0 || sessionActiveRef.current;
 
   const toggleMic = () => {
     setMicEnabled((value) => !value);
@@ -316,26 +320,15 @@ const DialoguePage = () => {
         title={translation("title")}
         subtitle={`${wordsHook.length} ${translation("wordsInContext")}`}
         action={
-          <Stack direction="row" spacing={0.5}>
-            <IconButton
-              aria-label={
-                showText ? translation("hideText") : translation("showText")
-              }
-              onClick={() => setShowText((value) => !value)}
-              color={showText ? "primary" : "default"}
-            >
-              {showText ? <VisibilityIcon /> : <VisibilityOffIcon />}
-            </IconButton>
-            {sessionActiveRef.current || turns.length > 0 ? (
-              <IconButton
-                aria-label={translation("restart")}
-                onClick={resetDialogue}
-                disabled={phase !== "ready" && phase !== "idle"}
-              >
-                <RestartAltIcon />
-              </IconButton>
-            ) : null}
-          </Stack>
+          <IconButton
+            aria-label={
+              showText ? translation("hideText") : translation("showText")
+            }
+            onClick={() => setShowText((value) => !value)}
+            color={showText ? "primary" : "default"}
+          >
+            {showText ? <VisibilityIcon /> : <VisibilityOffIcon />}
+          </IconButton>
         }
       />
 
@@ -425,12 +418,7 @@ const DialoguePage = () => {
           </Typography>
         ) : null}
 
-        <Stack
-          direction="row"
-          justifyContent="center"
-          alignItems="center"
-          spacing={2}
-        >
+        <Stack spacing={1.75} alignItems="center">
           <MicRipple active={isUserSpeaking && micEnabled} level={level}>
             <Fab
               color={micEnabled ? "primary" : "default"}
@@ -443,6 +431,18 @@ const DialoguePage = () => {
               {micEnabled ? <MicIcon /> : <MicOffIcon />}
             </Fab>
           </MicRipple>
+
+          {isSessionActive ? (
+            <Button
+              color="error"
+              variant="outlined"
+              startIcon={<CallEndIcon />}
+              onClick={endDialogue}
+              aria-label={translation("end")}
+            >
+              {translation("end")}
+            </Button>
+          ) : null}
         </Stack>
 
         <Typography

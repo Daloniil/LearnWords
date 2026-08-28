@@ -125,6 +125,11 @@ export const dialogueTranslation = [
     ru: "Новый диалог",
   },
   {
+    title: "end",
+    en: "End conversation",
+    ru: "Закончить разговор",
+  },
+  {
     title: "errorMic",
     en: "Microphone access is required",
     ru: "Нужен доступ к микрофону",

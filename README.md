@@ -13,6 +13,8 @@
 Код API лежит отдельно: `~/whisper-api`  
 (Whisper STT + Silero TTS в одном сервере).
 
+Фронтенд (и локальный, и на Vercel) ходит на `127.0.0.1` **в браузере на твоём компьютере**. AI не крутится на Vercel — он должен быть запущен у тебя локально.
+
 ---
 
 ### Whisper + Silero — установка (один раз)
@@ -100,6 +102,31 @@ curl http://127.0.0.1:8000/v1/audio/speech \
 
 ---
 
+## Деплой фронтенда + локальный AI
+
+Сайт на Vercel может использовать **твой** локальный Whisper/Silero/LM Studio:
+
+1. На Mac запусти Whisper + Silero (`./start.sh`) и LM Studio Local Server.
+2. Открой **задеплоенный** сайт в Chrome на этом же компьютере.
+3. В LM Studio → Server → CORS добавь origin Vercel (например `https://learnwords-xxx.vercel.app`) или разреши все для теста.
+
+Whisper API уже разрешает `https://*.vercel.app` и отвечает Chrome Private Network Access.
+
+**Важно:**
+- Работает только пока API запущен на твоей машине.
+- Другие люди на твоём Vercel-сайте **не** получат твой локальный AI — у них нет `127.0.0.1:8000`.
+- Safari часто блокирует HTTPS→HTTP localhost; надёжнее Chrome / Edge.
+- Если всё равно блок — подними HTTPS-туннель (`cloudflared tunnel` / `ngrok`) на порт `8000` и пропиши URL в `NEXT_PUBLIC_WHISPER_URL` / `NEXT_PUBLIC_TTS_URL`.
+
+Опционально для кастомного домена фронтенда:
+
+```bash
+export CORS_ORIGINS="https://your-domain.com"
+./start.sh
+```
+
+---
+
 ## Приложение LearnWords
 
 ```bash
@@ -114,4 +141,4 @@ npm run dev
 
 1. Запусти LM Studio Local Server (`http://127.0.0.1:1234`) с моделью `qwen2.5-14b-instruct-mlx`
 2. Запусти Whisper + Silero (`./start.sh` в `~/whisper-api`)
-3. В LM Studio включи **CORS** для `http://localhost:3000`
+3. В LM Studio включи **CORS** для `http://localhost:3000` (и для Vercel-origin, если тестируешь прод)
