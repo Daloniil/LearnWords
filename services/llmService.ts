@@ -62,12 +62,22 @@ const isWeakReply = (text: string) => {
   return false;
 };
 
+const collectMatches = (raw: string, pattern: RegExp): string[] => {
+  const result: string[] = [];
+  const regex = new RegExp(pattern.source, pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`);
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(raw)) !== null) {
+    if (match[1]) result.push(match[1]);
+  }
+  return result;
+};
+
 const extractQuotedRussian = (raw: string): string => {
   const matches = [
-    ...raw.matchAll(/"([^"\n]{12,220})"/g),
-    ...raw.matchAll(/«([^»\n]{12,220})»/g),
+    ...collectMatches(raw, /"([^"\n]{12,220})"/g),
+    ...collectMatches(raw, /«([^»\n]{12,220})»/g),
   ]
-    .map((match) => stripModelNoise(match[1]))
+    .map((chunk) => stripModelNoise(chunk))
     .filter(
       (text) =>
         /[А-Яа-яЁё]/.test(text) &&
