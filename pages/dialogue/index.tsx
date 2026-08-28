@@ -83,6 +83,7 @@ const DialoguePage = () => {
   const listRef = useRef<HTMLDivElement | null>(null);
   const sessionActiveRef = useRef(false);
   const resumeAudioContextRef = useRef<() => Promise<void>>(async () => undefined);
+  const releaseForPlaybackRef = useRef<() => Promise<void>>(async () => undefined);
 
   const translation = (key: string) =>
     setTranslation(key, dialogueTranslation, languageContext);
@@ -154,6 +155,7 @@ const DialoguePage = () => {
         appendTurn("assistant", reply);
 
         setPhase("speaking");
+        await releaseForPlaybackRef.current();
         await speakRussian(reply, "ru", pairConfig.sourceLang);
         await resumeAudioContextRef.current();
         setPhase("ready");
@@ -179,15 +181,20 @@ const DialoguePage = () => {
   const autoListenEnabled = micEnabled && micArmed;
   const listenPaused = phase !== "ready";
 
-  const { listenState, level, resumeAudioContext } = useAutoVoiceListen({
-    enabled: autoListenEnabled,
-    paused: listenPaused,
-    onUtterance: handleUtterance,
-  });
+  const { listenState, level, resumeAudioContext, releaseForPlayback } =
+    useAutoVoiceListen({
+      enabled: autoListenEnabled,
+      paused: listenPaused,
+      onUtterance: handleUtterance,
+    });
 
   useEffect(() => {
     resumeAudioContextRef.current = resumeAudioContext;
   }, [resumeAudioContext]);
+
+  useEffect(() => {
+    releaseForPlaybackRef.current = releaseForPlayback;
+  }, [releaseForPlayback]);
 
   const endDialogue = () => {
     stopSpeaking();
@@ -243,6 +250,7 @@ const DialoguePage = () => {
 
       appendTurn("assistant", welcome);
       setPhase("speaking");
+      await releaseForPlaybackRef.current();
       await speakRussian(welcome, "ru", pairConfig.sourceLang);
       await resumeAudioContextRef.current();
 
@@ -261,8 +269,10 @@ const DialoguePage = () => {
       appendTurn("assistant", firstQuestion);
 
       setPhase("speaking");
+      await releaseForPlaybackRef.current();
       await speakRussian(firstQuestion, "ru", pairConfig.sourceLang);
       await resumeAudioContextRef.current();
+      // Mic only after all intro audio finished — avoids killing TTS on iOS.
       setMicArmed(true);
       setPhase("ready");
     } catch (error) {

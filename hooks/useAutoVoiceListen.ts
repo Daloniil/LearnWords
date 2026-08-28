@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 type AutoListenOptions = {
   enabled: boolean;
-  /** Keep mic open but do not record (e.g. while tutor TTS is playing). */
+  /** When true, fully release the mic so iOS can play TTS. */
   paused?: boolean;
   onUtterance: (blob: Blob) => void | Promise<void>;
   silenceMs?: number;
@@ -14,7 +14,6 @@ type ListenState = "off" | "idle" | "speech" | "unsupported";
 
 const pickMimeType = () => {
   if (typeof MediaRecorder === "undefined") return "";
-  // iOS Safari prefers mp4/aac; Chromium prefers webm.
   if (MediaRecorder.isTypeSupported("audio/mp4")) return "audio/mp4";
   if (MediaRecorder.isTypeSupported("audio/aac")) return "audio/aac";
   if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
@@ -74,12 +73,6 @@ export const useAutoVoiceListen = ({
     pausedRef.current = paused;
   }, [paused]);
 
-  const setMicTracksEnabled = useCallback((value: boolean) => {
-    streamRef.current?.getAudioTracks().forEach((track) => {
-      track.enabled = value;
-    });
-  }, []);
-
   const resumeAudioContext = useCallback(async () => {
     const ctx = audioContextRef.current;
     if (!ctx) return;
@@ -87,7 +80,7 @@ export const useAutoVoiceListen = ({
       try {
         await ctx.resume();
       } catch {
-        // iOS may require a fresh user gesture
+        // ignore
       }
     }
   }, []);
@@ -116,7 +109,8 @@ export const useAutoVoiceListen = ({
     return blob;
   }, []);
 
-  const cleanup = useCallback(async () => {
+  /** Fully release mic hardware — required before TTS on iOS Safari. */
+  const releaseForPlayback = useCallback(async () => {
     if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
@@ -132,7 +126,13 @@ export const useAutoVoiceListen = ({
     chunksRef.current = [];
     speechStartedAtRef.current = null;
 
-    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current?.getTracks().forEach((track) => {
+      try {
+        track.stop();
+      } catch {
+        // ignore
+      }
+    });
     streamRef.current = null;
 
     if (audioContextRef.current) {
@@ -144,9 +144,14 @@ export const useAutoVoiceListen = ({
       audioContextRef.current = null;
     }
     analyserRef.current = null;
-    setListenState("off");
     setLevel(0);
+    setListenState("off");
+
+    // Give iOS a moment to switch audio session back to playback.
+    await new Promise<void>((resolve) => setTimeout(resolve, 120));
   }, []);
+
+  const cleanup = releaseForPlayback;
 
   const startSpeechCapture = useCallback(() => {
     const stream = streamRef.current;
@@ -199,60 +204,15 @@ export const useAutoVoiceListen = ({
       }
     } finally {
       processingRef.current = false;
-      if (enabledRef.current) {
+      if (enabledRef.current && !pausedRef.current) {
         setListenState("idle");
       }
     }
   }, [stopRecorder]);
 
-  // Pause: stop in-flight capture, mute tracks so iOS can play TTS cleanly.
   useEffect(() => {
-    if (!enabled) return;
-
-    if (paused) {
-      void (async () => {
-        if (recorderRef.current) {
-          await stopRecorder();
-          speechStartedAtRef.current = null;
-        }
-        setMicTracksEnabled(false);
-        setListenState("idle");
-        setLevel(0);
-      })();
-      return;
-    }
-
-    setMicTracksEnabled(true);
-    void resumeAudioContext();
-    setListenState("idle");
-  }, [enabled, paused, resumeAudioContext, setMicTracksEnabled, stopRecorder]);
-
-  // Resume AudioContext after TTS / tab focus (critical on iOS Safari).
-  useEffect(() => {
-    if (!enabled) return;
-
-    const kick = () => {
-      if (!pausedRef.current) {
-        void resumeAudioContext();
-        setMicTracksEnabled(true);
-      }
-    };
-
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") kick();
-    };
-
-    window.addEventListener("focus", kick);
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => {
-      window.removeEventListener("focus", kick);
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
-  }, [enabled, resumeAudioContext, setMicTracksEnabled]);
-
-  useEffect(() => {
-    if (!enabled) {
-      void cleanup();
+    if (!enabled || paused) {
+      void releaseForPlayback();
       return;
     }
 
@@ -275,23 +235,19 @@ export const useAutoVoiceListen = ({
             autoGainControl: true,
           },
         });
-        if (cancelled || !enabledRef.current) {
+        if (cancelled || !enabledRef.current || pausedRef.current) {
           stream.getTracks().forEach((track) => track.stop());
           return;
         }
 
         stream.getAudioTracks().forEach((track) => {
           track.onended = () => {
-            if (!enabledRef.current || cancelled) return;
-            // iOS often kills the track after playback session changes.
+            if (!enabledRef.current || pausedRef.current || cancelled) return;
             setRestartToken((value) => value + 1);
           };
         });
 
         streamRef.current = stream;
-        if (pausedRef.current) {
-          setMicTracksEnabled(false);
-        }
 
         const Ctor = getAudioContextCtor();
         if (!Ctor) {
@@ -315,11 +271,11 @@ export const useAutoVoiceListen = ({
         const data = new Uint8Array(analyser.fftSize);
 
         const tick = () => {
-          if (cancelled || !enabledRef.current) {
+          if (cancelled || !enabledRef.current || pausedRef.current) {
             return;
           }
 
-          if (processingRef.current || pausedRef.current) {
+          if (processingRef.current) {
             rafRef.current = requestAnimationFrame(tick);
             return;
           }
@@ -373,24 +329,44 @@ export const useAutoVoiceListen = ({
 
     return () => {
       cancelled = true;
-      void cleanup();
+      void releaseForPlayback();
     };
   }, [
     enabled,
+    paused,
     restartToken,
-    cleanup,
+    releaseForPlayback,
     finishUtterance,
     minSpeechMs,
-    setMicTracksEnabled,
     silenceMs,
     startSpeechCapture,
     threshold,
   ]);
 
+  useEffect(() => {
+    if (!enabled || paused) return;
+
+    const kick = () => {
+      void resumeAudioContext();
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") kick();
+    };
+
+    window.addEventListener("focus", kick);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", kick);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [enabled, paused, resumeAudioContext]);
+
   return {
     listenState,
     level,
     stopListening: cleanup,
+    releaseForPlayback,
     resumeAudioContext,
   };
 };
