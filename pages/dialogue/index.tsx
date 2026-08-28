@@ -159,7 +159,9 @@ const DialoguePage = () => {
 
         setPhase("speaking");
         await releaseForPlaybackRef.current();
-        await speakRussian(reply, "ru", pairConfig.sourceLang);
+        await speakRussian(reply, "ru", pairConfig.sourceLang).catch(
+          () => undefined
+        );
         await resumeAudioContextRef.current();
         setPhase("ready");
       } catch (error) {
@@ -265,7 +267,7 @@ const DialoguePage = () => {
       appendTurn("assistant", welcome);
       setPhase("speaking");
       await releaseForPlaybackRef.current();
-      await speakRussian(welcome, "ru", pairConfig.sourceLang);
+      await speakRussian(welcome, "ru", pairConfig.sourceLang).catch(() => undefined);
       await resumeAudioContextRef.current();
 
       setPhase("thinking");
@@ -284,7 +286,9 @@ const DialoguePage = () => {
 
       setPhase("speaking");
       await releaseForPlaybackRef.current();
-      await speakRussian(firstQuestion, "ru", pairConfig.sourceLang);
+      await speakRussian(firstQuestion, "ru", pairConfig.sourceLang).catch(
+        () => undefined
+      );
       await resumeAudioContextRef.current();
       // Continuous mic only on desktop. iOS uses hold-to-talk after intro.
       if (!isIOS) {

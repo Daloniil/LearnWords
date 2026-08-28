@@ -16,6 +16,8 @@ const PREFERRED_VOICE_NAMES = [
 let cachedVoice: SpeechSynthesisVoice | null | undefined;
 let currentAudio: HTMLAudioElement | null = null;
 let unlockCtx: AudioContext | null = null;
+let currentSource: AudioBufferSourceNode | null = null;
+let currentPlaybackCtx: AudioContext | null = null;
 
 const getAudioContextCtor = () => {
   if (typeof window === "undefined") return null;
@@ -29,6 +31,23 @@ const getAudioContextCtor = () => {
     null
   );
 };
+
+const withTimeout = <T,>(promise: Promise<T>, ms: number, label: string) =>
+  new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`${label} timed out after ${ms}ms`));
+    }, ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      }
+    );
+  });
 
 /** Call from a user tap (Start). Unlocks iOS Safari audio playback. Never blocks long. */
 export const unlockAudioSession = async () => {
@@ -116,30 +135,38 @@ export const warmUpSpeechVoices = () => {
 };
 
 const speakWithBrowser = (text: string) =>
-  new Promise<void>((resolve) => {
-    if (typeof window === "undefined" || !window.speechSynthesis) {
-      resolve();
-      return;
-    }
+  withTimeout(
+    new Promise<void>((resolve) => {
+      if (typeof window === "undefined" || !window.speechSynthesis) {
+        resolve();
+        return;
+      }
 
-    window.speechSynthesis.cancel();
+      window.speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "ru-RU";
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
-    utterance.volume = 1;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "ru-RU";
+      utterance.rate = 0.9;
+      utterance.pitch = 1;
+      utterance.volume = 1;
 
-    const voice = pickRussianVoice();
-    if (voice) {
-      utterance.voice = voice;
-      utterance.lang = voice.lang || "ru-RU";
-    }
+      const voice = pickRussianVoice();
+      if (voice) {
+        utterance.voice = voice;
+        utterance.lang = voice.lang || "ru-RU";
+      }
 
-    utterance.onend = () => resolve();
-    utterance.onerror = () => resolve();
-    window.speechSynthesis.speak(utterance);
-  });
+      utterance.onend = () => resolve();
+      utterance.onerror = () => resolve();
+      window.speechSynthesis.speak(utterance);
+
+      // iOS sometimes never fires onend.
+      const approxMs = Math.min(20000, Math.max(2500, text.length * 80));
+      setTimeout(() => resolve(), approxMs);
+    }),
+    25000,
+    "browser-tts"
+  );
 
 const prepareAudioElement = (audio: HTMLAudioElement) => {
   audio.setAttribute("playsinline", "true");
@@ -148,96 +175,49 @@ const prepareAudioElement = (audio: HTMLAudioElement) => {
   audio.preload = "auto";
 };
 
-const playBlobWithWebAudio = async (blob: Blob) => {
-  const Ctor =
-    window.AudioContext ||
-    (
-      window as Window & {
-        webkitAudioContext?: typeof AudioContext;
-      }
-    ).webkitAudioContext;
-  if (!Ctor) {
-    throw new Error("Web Audio unavailable");
-  }
-
-  const ctx = new Ctor();
-  try {
-    if (ctx.state === "suspended") {
-      await ctx.resume();
-    }
-    const arrayBuffer = await blob.arrayBuffer();
-    const audioBuffer = await new Promise<AudioBuffer>((resolve, reject) => {
-      let settled = false;
-      const ok = (buffer: AudioBuffer) => {
-        if (settled) return;
-        settled = true;
-        resolve(buffer);
-      };
-      const fail = (error?: DOMException | string) => {
-        if (settled) return;
-        settled = true;
-        reject(error || new Error("decodeAudioData failed"));
-      };
-      try {
-        const maybePromise = ctx.decodeAudioData(
-          arrayBuffer.slice(0),
-          ok,
-          fail
-        ) as Promise<AudioBuffer> | void;
-        if (maybePromise && typeof maybePromise.then === "function") {
-          maybePromise.then(ok, fail);
-        }
-      } catch (error) {
-        fail(error as DOMException);
-      }
-    });
-
-    await new Promise<void>((resolve, reject) => {
-      const source = ctx.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(ctx.destination);
-      source.onended = () => resolve();
-      try {
-        source.start(0);
-      } catch (error) {
-        reject(error);
-      }
-    });
-  } finally {
-    try {
-      await ctx.close();
-    } catch {
-      // ignore
-    }
-  }
-};
-
 const playBlobWithHtmlAudio = async (blob: Blob) => {
   const url = URL.createObjectURL(blob);
-  await new Promise<void>((resolve, reject) => {
-    const audio = new Audio();
-    prepareAudioElement(audio);
-    audio.src = url;
-    currentAudio = audio;
+  try {
+    await withTimeout(
+      new Promise<void>((resolve, reject) => {
+        const audio = new Audio();
+        prepareAudioElement(audio);
+        audio.src = url;
+        currentAudio = audio;
 
-    const finish = () => {
-      URL.revokeObjectURL(url);
-      if (currentAudio === audio) currentAudio = null;
-    };
+        let settled = false;
+        const finishOk = () => {
+          if (settled) return;
+          settled = true;
+          resolve();
+        };
+        const finishErr = (error: Error) => {
+          if (settled) return;
+          settled = true;
+          reject(error);
+        };
 
-    audio.onended = () => {
-      finish();
-      resolve();
-    };
-    audio.onerror = () => {
-      finish();
-      reject(new Error("Audio playback failed"));
-    };
-    audio.play().catch((error) => {
-      finish();
-      reject(error);
-    });
-  });
+        audio.onended = finishOk;
+        audio.onerror = () => finishErr(new Error("Audio playback failed"));
+        audio.onloadedmetadata = () => {
+          // Fallback if onended never fires (common on iOS).
+          const durationMs = Number.isFinite(audio.duration)
+            ? Math.ceil(audio.duration * 1000) + 400
+            : 15000;
+          setTimeout(finishOk, durationMs);
+        };
+
+        audio.play().catch(finishErr);
+      }),
+      45000,
+      "html-audio"
+    );
+  } finally {
+    URL.revokeObjectURL(url);
+    if (currentAudio) {
+      currentAudio = null;
+    }
+  }
 };
 
 const speakWithLocalTts = async (
@@ -266,13 +246,9 @@ const speakWithLocalTts = async (
   }
 
   const blob = await response.blob();
-
-  // Prefer a fresh Web Audio context — more reliable on iOS after mic use.
-  try {
-    await playBlobWithWebAudio(blob);
-  } catch {
-    await playBlobWithHtmlAudio(blob);
-  }
+  // Silero returns mp3 — iOS WebAudio often can't decode it and hangs.
+  // Always prefer HTMLAudioElement for TTS playback.
+  await playBlobWithHtmlAudio(blob);
 };
 
 export const speakRussian = async (
@@ -282,9 +258,17 @@ export const speakRussian = async (
 ) => {
   stopSpeaking();
   try {
-    await speakWithLocalTts(text, language, foreignLanguage);
+    await withTimeout(
+      speakWithLocalTts(text, language, foreignLanguage),
+      AI_CONFIG.ttsTimeoutMs + 10_000,
+      "speakRussian"
+    );
   } catch {
-    await speakWithBrowser(text);
+    try {
+      await speakWithBrowser(text);
+    } catch {
+      // Never block the dialogue UI on TTS failure.
+    }
   }
 };
 
@@ -293,9 +277,25 @@ export const stopSpeaking = () => {
     window.speechSynthesis?.cancel();
   }
   if (currentAudio) {
-    currentAudio.pause();
-    currentAudio.removeAttribute("src");
-    currentAudio.load();
+    try {
+      currentAudio.pause();
+      currentAudio.removeAttribute("src");
+      currentAudio.load();
+    } catch {
+      // ignore
+    }
     currentAudio = null;
+  }
+  if (currentSource) {
+    try {
+      currentSource.stop();
+    } catch {
+      // ignore
+    }
+    currentSource = null;
+  }
+  if (currentPlaybackCtx) {
+    void currentPlaybackCtx.close().catch(() => undefined);
+    currentPlaybackCtx = null;
   }
 };
