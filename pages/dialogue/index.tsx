@@ -45,6 +45,7 @@ import { setTranslation } from "../../utils/setTranslation";
 import {
   speakRussian,
   stopSpeaking,
+  unlockAudioSession,
   warmUpSpeechVoices,
 } from "../../utils/speakRussian";
 
@@ -79,6 +80,7 @@ const DialoguePage = () => {
   const messagesRef = useRef<ChatMessage[]>([]);
   const listRef = useRef<HTMLDivElement | null>(null);
   const sessionActiveRef = useRef(false);
+  const resumeAudioContextRef = useRef<() => Promise<void>>(async () => undefined);
 
   const translation = (key: string) =>
     setTranslation(key, dialogueTranslation, languageContext);
@@ -151,6 +153,7 @@ const DialoguePage = () => {
 
         setPhase("speaking");
         await speakRussian(reply, "ru", pairConfig.sourceLang);
+        await resumeAudioContextRef.current();
         setPhase("ready");
       } catch (error) {
         const message =
@@ -170,12 +173,22 @@ const DialoguePage = () => {
     [addNotification, appendTurn, pairConfig.sourceLang, translation, wordsHook]
   );
 
-  const autoListenEnabled = micEnabled && phase === "ready";
+  const autoListenEnabled = micEnabled && phase !== "idle";
+  const listenPaused =
+    phase === "speaking" ||
+    phase === "thinking" ||
+    phase === "transcribing" ||
+    phase === "starting";
 
-  const { listenState, level } = useAutoVoiceListen({
+  const { listenState, level, resumeAudioContext } = useAutoVoiceListen({
     enabled: autoListenEnabled,
+    paused: listenPaused,
     onUtterance: handleUtterance,
   });
+
+  useEffect(() => {
+    resumeAudioContextRef.current = resumeAudioContext;
+  }, [resumeAudioContext]);
 
   const endDialogue = () => {
     stopSpeaking();
@@ -205,6 +218,8 @@ const DialoguePage = () => {
     messagesRef.current = [];
 
     try {
+      await unlockAudioSession();
+
       const practiceWords = pickPracticeWords(wordsHook);
       const welcome = buildWelcomeText(pairConfig);
       const system = buildDialogueSystemPrompt(practiceWords, pairConfig);
@@ -220,6 +235,7 @@ const DialoguePage = () => {
       appendTurn("assistant", welcome);
       setPhase("speaking");
       await speakRussian(welcome, "ru", pairConfig.sourceLang);
+      await resumeAudioContextRef.current();
 
       setPhase("thinking");
       const firstQuestion = await firstQuestionPromise;
@@ -237,6 +253,7 @@ const DialoguePage = () => {
 
       setPhase("speaking");
       await speakRussian(firstQuestion, "ru", pairConfig.sourceLang);
+      await resumeAudioContextRef.current();
       setPhase("ready");
     } catch (error) {
       sessionActiveRef.current = false;

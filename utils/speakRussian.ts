@@ -15,6 +15,56 @@ const PREFERRED_VOICE_NAMES = [
 
 let cachedVoice: SpeechSynthesisVoice | null | undefined;
 let currentAudio: HTMLAudioElement | null = null;
+let unlockCtx: AudioContext | null = null;
+
+const getAudioContextCtor = () => {
+  if (typeof window === "undefined") return null;
+  return (
+    window.AudioContext ||
+    (
+      window as Window & {
+        webkitAudioContext?: typeof AudioContext;
+      }
+    ).webkitAudioContext ||
+    null
+  );
+};
+
+/** Call from a user tap (Start). Unlocks iOS Safari audio playback. */
+export const unlockAudioSession = async () => {
+  if (typeof window === "undefined") return;
+
+  const Ctor = getAudioContextCtor();
+  if (Ctor) {
+    if (!unlockCtx || unlockCtx.state === "closed") {
+      unlockCtx = new Ctor();
+    }
+    if (unlockCtx.state === "suspended") {
+      await unlockCtx.resume().catch(() => undefined);
+    }
+    try {
+      const buffer = unlockCtx.createBuffer(1, 1, 22050);
+      const source = unlockCtx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(unlockCtx.destination);
+      source.start(0);
+    } catch {
+      // ignore
+    }
+  }
+
+  try {
+    const silent = new Audio(
+      "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA="
+    );
+    silent.volume = 0.01;
+    (silent as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
+    await silent.play().catch(() => undefined);
+    silent.pause();
+  } catch {
+    // ignore
+  }
+};
 
 const pickRussianVoice = (): SpeechSynthesisVoice | null => {
   if (typeof window === "undefined" || !window.speechSynthesis) {
@@ -81,6 +131,13 @@ const speakWithBrowser = (text: string) =>
     window.speechSynthesis.speak(utterance);
   });
 
+const prepareAudioElement = (audio: HTMLAudioElement) => {
+  audio.setAttribute("playsinline", "true");
+  audio.setAttribute("webkit-playsinline", "true");
+  (audio as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
+  audio.preload = "auto";
+};
+
 const speakWithLocalTts = async (
   text: string,
   language = "ru",
@@ -107,19 +164,28 @@ const speakWithLocalTts = async (
   const url = URL.createObjectURL(blob);
 
   await new Promise<void>((resolve, reject) => {
-    const audio = new Audio(url);
+    const audio = new Audio();
+    prepareAudioElement(audio);
+    audio.src = url;
     currentAudio = audio;
-    audio.onended = () => {
+
+    const finish = () => {
       URL.revokeObjectURL(url);
       if (currentAudio === audio) currentAudio = null;
+    };
+
+    audio.onended = () => {
+      finish();
       resolve();
     };
     audio.onerror = () => {
-      URL.revokeObjectURL(url);
-      if (currentAudio === audio) currentAudio = null;
+      finish();
       reject(new Error("Audio playback failed"));
     };
-    audio.play().catch(reject);
+    audio.play().catch((error) => {
+      finish();
+      reject(error);
+    });
   });
 };
 
@@ -142,7 +208,8 @@ export const stopSpeaking = () => {
   }
   if (currentAudio) {
     currentAudio.pause();
-    currentAudio.src = "";
+    currentAudio.removeAttribute("src");
+    currentAudio.load();
     currentAudio = null;
   }
 };

@@ -118,7 +118,15 @@ curl http://127.0.0.1:8000/v1/audio/speech \
 
 ```bash
 curl -H "ngrok-skip-browser-warning: 1" https://percental-quinn-wizardly.ngrok-free.dev/health
-```---
+```
+
+Одной командой (API + ngrok; LM Studio уже должен быть запущен):
+
+```bash
+cd ~/Desktop/LearnWords && ./scripts/start-ai.sh
+```
+
+---
 
 ## Приложение LearnWords
 
