@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { reclaimPlaybackSession } from "../utils/speakRussian";
 
 type PressToTalkOptions = {
   enabled: boolean;
@@ -19,8 +20,8 @@ const pickMimeType = () => {
 };
 
 /**
- * iOS-safe mic: open only while the user holds the button, then fully release
- * hardware before returning the blob (so TTS can play afterward).
+ * iOS-safe mic: open only while held. No AudioContext (it poisons playback).
+ * On release, reclaim playback session inside the user gesture, then hand off blob.
  */
 export const usePressToTalk = ({ enabled, onUtterance }: PressToTalkOptions) => {
   const [talkState, setTalkState] = useState<TalkState>("off");
@@ -29,10 +30,9 @@ export const usePressToTalk = ({ enabled, onUtterance }: PressToTalkOptions) => 
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const rafRef = useRef<number | null>(null);
   const recordingRef = useRef(false);
   const enabledRef = useRef(enabled);
+  const levelTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     onUtteranceRef.current = onUtterance;
@@ -48,10 +48,10 @@ export const usePressToTalk = ({ enabled, onUtterance }: PressToTalkOptions) => 
     }
   }, [enabled]);
 
-  const hardStopHardware = useCallback(async () => {
-    if (rafRef.current !== null) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
+  const hardStopHardware = useCallback(() => {
+    if (levelTimerRef.current) {
+      clearInterval(levelTimerRef.current);
+      levelTimerRef.current = null;
     }
 
     const recorder = recorderRef.current;
@@ -72,16 +72,6 @@ export const usePressToTalk = ({ enabled, onUtterance }: PressToTalkOptions) => 
       }
     });
     streamRef.current = null;
-
-    if (audioContextRef.current) {
-      try {
-        await audioContextRef.current.close();
-      } catch {
-        // ignore
-      }
-      audioContextRef.current = null;
-    }
-
     setLevel(0);
   }, []);
 
@@ -110,37 +100,10 @@ export const usePressToTalk = ({ enabled, onUtterance }: PressToTalkOptions) => 
 
       streamRef.current = stream;
 
-      const Ctor =
-        window.AudioContext ||
-        (
-          window as Window & {
-            webkitAudioContext?: typeof AudioContext;
-          }
-        ).webkitAudioContext;
-      if (Ctor) {
-        const ctx = new Ctor();
-        audioContextRef.current = ctx;
-        if (ctx.state === "suspended") {
-          await ctx.resume().catch(() => undefined);
-        }
-        const source = ctx.createMediaStreamSource(stream);
-        const analyser = ctx.createAnalyser();
-        analyser.fftSize = 1024;
-        source.connect(analyser);
-        const data = new Uint8Array(analyser.fftSize);
-        const tick = () => {
-          if (!recordingRef.current) return;
-          analyser.getByteTimeDomainData(data);
-          let sum = 0;
-          for (let i = 0; i < data.length; i += 1) {
-            const value = (data[i] - 128) / 128;
-            sum += value * value;
-          }
-          setLevel(Math.sqrt(sum / data.length));
-          rafRef.current = requestAnimationFrame(tick);
-        };
-        rafRef.current = requestAnimationFrame(tick);
-      }
+      // Fake level pulse — do NOT open AudioContext on iOS (breaks TTS).
+      levelTimerRef.current = setInterval(() => {
+        setLevel(0.15 + Math.random() * 0.35);
+      }, 120);
 
       const mimeType = pickMimeType();
       const recorder = mimeType
@@ -154,7 +117,7 @@ export const usePressToTalk = ({ enabled, onUtterance }: PressToTalkOptions) => 
       setTalkState("recording");
     } catch {
       recordingRef.current = false;
-      await hardStopHardware();
+      hardStopHardware();
       setTalkState("unsupported");
     }
   }, [hardStopHardware]);
@@ -183,10 +146,13 @@ export const usePressToTalk = ({ enabled, onUtterance }: PressToTalkOptions) => 
     recorderRef.current = null;
     chunksRef.current = [];
 
-    // Critical on iOS: release mic BEFORE returning to TTS pipeline.
-    await hardStopHardware();
-    // Let Safari flip audio session to playback.
-    await new Promise<void>((resolve) => setTimeout(resolve, 180));
+    // Stop mic tracks first…
+    hardStopHardware();
+    // …then reclaim playback INSIDE this gesture stack as much as possible.
+    reclaimPlaybackSession();
+
+    await new Promise<void>((resolve) => setTimeout(resolve, 250));
+    reclaimPlaybackSession();
 
     setTalkState(enabledRef.current ? "idle" : "off");
 
@@ -198,7 +164,7 @@ export const usePressToTalk = ({ enabled, onUtterance }: PressToTalkOptions) => 
   useEffect(() => {
     return () => {
       recordingRef.current = false;
-      void hardStopHardware();
+      hardStopHardware();
     };
   }, [hardStopHardware]);
 

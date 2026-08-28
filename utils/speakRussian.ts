@@ -1,4 +1,6 @@
 import { AI_CONFIG, aiFetch } from "../services/aiConfig";
+import { isIOSDevice } from "./isIOS";
+import { voiceSession } from "./voiceSession";
 
 const PREFERRED_VOICE_NAMES = [
   /milena/i,
@@ -15,28 +17,12 @@ const PREFERRED_VOICE_NAMES = [
 
 let cachedVoice: SpeechSynthesisVoice | null | undefined;
 let currentAudio: HTMLAudioElement | null = null;
-let unlockCtx: AudioContext | null = null;
-let currentSource: AudioBufferSourceNode | null = null;
-let currentPlaybackCtx: AudioContext | null = null;
 
-const getAudioContextCtor = () => {
-  if (typeof window === "undefined") return null;
-  return (
-    window.AudioContext ||
-    (
-      window as Window & {
-        webkitAudioContext?: typeof AudioContext;
-      }
-    ).webkitAudioContext ||
-    null
-  );
-};
+export type SpeakResult = { ok: true } | { ok: false; blob: Blob; text: string };
 
-const withTimeout = <T,>(promise: Promise<T>, ms: number, label: string) =>
+const withTimeout = <T,>(promise: Promise<T>, ms: number) =>
   new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => {
-      reject(new Error(`${label} timed out after ${ms}ms`));
-    }, ms);
+    const timer = setTimeout(() => reject(new Error("timeout")), ms);
     promise.then(
       (value) => {
         clearTimeout(timer);
@@ -49,66 +35,34 @@ const withTimeout = <T,>(promise: Promise<T>, ms: number, label: string) =>
     );
   });
 
-/** Call from a user tap (Start). Unlocks iOS Safari audio playback. Never blocks long. */
 export const unlockAudioSession = async () => {
-  if (typeof window === "undefined") return;
+  // Prefer the shared session when available.
+  if (voiceSession.isReady) {
+    return;
+  }
+};
 
-  const run = async () => {
-    const Ctor = getAudioContextCtor();
-    if (Ctor) {
-      if (!unlockCtx || unlockCtx.state === "closed") {
-        unlockCtx = new Ctor();
-      }
-      if (unlockCtx.state === "suspended") {
-        await unlockCtx.resume().catch(() => undefined);
-      }
-      try {
-        const buffer = unlockCtx.createBuffer(1, 1, 22050);
-        const source = unlockCtx.createBufferSource();
-        source.buffer = buffer;
-        source.connect(unlockCtx.destination);
-        source.start(0);
-      } catch {
-        // ignore
-      }
-    }
+export const reclaimPlaybackSession = () => {
+  // No-op: shared AudioContext handles reclaim.
+};
 
-    try {
-      const silent = new Audio(
-        "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA="
-      );
-      silent.volume = 0.01;
-      (silent as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
-      await Promise.race([
-        silent.play().catch(() => undefined),
-        new Promise<void>((resolve) => setTimeout(resolve, 200)),
-      ]);
-      silent.pause();
-    } catch {
-      // ignore
-    }
+export const warmUpSpeechVoices = () => {
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+  const refresh = () => {
+    cachedVoice = undefined;
+    pickRussianVoice();
   };
-
-  await Promise.race([
-    run(),
-    new Promise<void>((resolve) => setTimeout(resolve, 400)),
-  ]);
+  refresh();
+  window.speechSynthesis.onvoiceschanged = refresh;
 };
 
 const pickRussianVoice = (): SpeechSynthesisVoice | null => {
-  if (typeof window === "undefined" || !window.speechSynthesis) {
-    return null;
-  }
-
-  if (cachedVoice !== undefined) {
-    return cachedVoice;
-  }
-
+  if (typeof window === "undefined" || !window.speechSynthesis) return null;
+  if (cachedVoice !== undefined) return cachedVoice;
   const voices = window.speechSynthesis.getVoices();
   const russian = voices.filter((voice) =>
     voice.lang.toLowerCase().startsWith("ru")
   );
-
   for (const pattern of PREFERRED_VOICE_NAMES) {
     const match = russian.find((voice) => pattern.test(voice.name));
     if (match) {
@@ -116,22 +70,9 @@ const pickRussianVoice = (): SpeechSynthesisVoice | null => {
       return match;
     }
   }
-
   cachedVoice =
     russian.find((voice) => voice.localService) || russian[0] || null;
   return cachedVoice;
-};
-
-export const warmUpSpeechVoices = () => {
-  if (typeof window === "undefined" || !window.speechSynthesis) return;
-
-  const refresh = () => {
-    cachedVoice = undefined;
-    pickRussianVoice();
-  };
-
-  refresh();
-  window.speechSynthesis.onvoiceschanged = refresh;
 };
 
 const speakWithBrowser = (text: string) =>
@@ -141,133 +82,123 @@ const speakWithBrowser = (text: string) =>
         resolve();
         return;
       }
-
       window.speechSynthesis.cancel();
-
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "ru-RU";
       utterance.rate = 0.9;
-      utterance.pitch = 1;
-      utterance.volume = 1;
-
       const voice = pickRussianVoice();
       if (voice) {
         utterance.voice = voice;
         utterance.lang = voice.lang || "ru-RU";
       }
-
-      utterance.onend = () => resolve();
-      utterance.onerror = () => resolve();
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        resolve();
+      };
+      utterance.onend = finish;
+      utterance.onerror = finish;
       window.speechSynthesis.speak(utterance);
-
-      // iOS sometimes never fires onend.
-      const approxMs = Math.min(20000, Math.max(2500, text.length * 80));
-      setTimeout(() => resolve(), approxMs);
+      setTimeout(finish, Math.min(20000, Math.max(2500, text.length * 80)));
     }),
-    25000,
-    "browser-tts"
+    25000
   );
 
-const prepareAudioElement = (audio: HTMLAudioElement) => {
-  audio.setAttribute("playsinline", "true");
-  audio.setAttribute("webkit-playsinline", "true");
-  (audio as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
-  audio.preload = "auto";
-};
-
-const playBlobWithHtmlAudio = async (blob: Blob) => {
+const playHtmlAudio = async (blob: Blob) => {
   const url = URL.createObjectURL(blob);
   try {
     await withTimeout(
       new Promise<void>((resolve, reject) => {
         const audio = new Audio();
-        prepareAudioElement(audio);
+        audio.setAttribute("playsinline", "true");
+        (audio as HTMLAudioElement & { playsInline?: boolean }).playsInline =
+          true;
         audio.src = url;
         currentAudio = audio;
-
         let settled = false;
-        const finishOk = () => {
+        const ok = () => {
           if (settled) return;
           settled = true;
           resolve();
         };
-        const finishErr = (error: Error) => {
-          if (settled) return;
-          settled = true;
-          reject(error);
-        };
-
-        audio.onended = finishOk;
-        audio.onerror = () => finishErr(new Error("Audio playback failed"));
+        audio.onended = ok;
+        audio.onerror = () => reject(new Error("Audio playback failed"));
         audio.onloadedmetadata = () => {
-          // Fallback if onended never fires (common on iOS).
-          const durationMs = Number.isFinite(audio.duration)
+          const ms = Number.isFinite(audio.duration)
             ? Math.ceil(audio.duration * 1000) + 400
             : 15000;
-          setTimeout(finishOk, durationMs);
+          setTimeout(ok, ms);
         };
-
-        audio.play().catch(finishErr);
+        audio.play().catch(reject);
       }),
-      45000,
-      "html-audio"
+      45000
     );
   } finally {
     URL.revokeObjectURL(url);
-    if (currentAudio) {
-      currentAudio = null;
-    }
+    currentAudio = null;
   }
 };
 
-const speakWithLocalTts = async (
+const fetchTtsBlob = async (
   text: string,
   language = "ru",
   foreignLanguage?: string
 ) => {
+  // WAV + shared AudioContext is the only reliable path after mic on iOS.
+  const audioFormat = isIOSDevice() || voiceSession.isReady ? "wav" : "mp3";
   const response = await aiFetch(
     AI_CONFIG.ttsUrl,
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         input: text,
         language,
         foreign_language: foreignLanguage || undefined,
+        audio_format: audioFormat,
       }),
     },
     AI_CONFIG.ttsTimeoutMs
   );
-
   if (!response.ok) {
     throw new Error(`TTS error ${response.status}`);
   }
+  return response.blob();
+};
 
-  const blob = await response.blob();
-  // Silero returns mp3 — iOS WebAudio often can't decode it and hangs.
-  // Always prefer HTMLAudioElement for TTS playback.
-  await playBlobWithHtmlAudio(blob);
+export const playSpeechBlob = async (blob: Blob) => {
+  if (voiceSession.isReady) {
+    await voiceSession.playBlob(blob);
+    return;
+  }
+  await playHtmlAudio(blob);
 };
 
 export const speakRussian = async (
   text: string,
   language = "ru",
   foreignLanguage?: string
-) => {
+): Promise<SpeakResult> => {
   stopSpeaking();
   try {
-    await withTimeout(
-      speakWithLocalTts(text, language, foreignLanguage),
-      AI_CONFIG.ttsTimeoutMs + 10_000,
-      "speakRussian"
-    );
+    const blob = await fetchTtsBlob(text, language, foreignLanguage);
+    try {
+      if (voiceSession.isReady) {
+        await voiceSession.playBlob(blob);
+      } else {
+        await playHtmlAudio(blob);
+      }
+      return { ok: true };
+    } catch {
+      return { ok: false, blob, text };
+    }
   } catch {
     try {
       await speakWithBrowser(text);
+      return { ok: true };
     } catch {
-      // Never block the dialogue UI on TTS failure.
+      return { ok: false, blob: new Blob(), text };
     }
   }
 };
@@ -276,26 +207,13 @@ export const stopSpeaking = () => {
   if (typeof window !== "undefined") {
     window.speechSynthesis?.cancel();
   }
+  voiceSession.stopSpeaking();
   if (currentAudio) {
     try {
       currentAudio.pause();
-      currentAudio.removeAttribute("src");
-      currentAudio.load();
     } catch {
       // ignore
     }
     currentAudio = null;
-  }
-  if (currentSource) {
-    try {
-      currentSource.stop();
-    } catch {
-      // ignore
-    }
-    currentSource = null;
-  }
-  if (currentPlaybackCtx) {
-    void currentPlaybackCtx.close().catch(() => undefined);
-    currentPlaybackCtx = null;
   }
 };

@@ -40,6 +40,16 @@ export const dialogueTranslation = [
     ru: "Запись… отпусти, чтобы отправить",
   },
   {
+    title: "tapToHear",
+    en: "Tap to hear reply",
+    ru: "Нажми, чтобы слушать ответ",
+  },
+  {
+    title: "playReply",
+    en: "Play reply",
+    ru: "Слушать ответ",
+  },
+  {
     title: "tapToStop",
     en: "Tap to send",
     ru: "Нажми, чтобы отправить",

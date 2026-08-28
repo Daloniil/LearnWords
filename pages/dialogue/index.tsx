@@ -4,6 +4,7 @@ import MicOffIcon from "@mui/icons-material/MicOff";
 import RecordVoiceOverIcon from "@mui/icons-material/RecordVoiceOver";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import VolumeUpIcon from "@mui/icons-material/VolumeUp";
 import {
   Box,
   Button,
@@ -20,16 +21,14 @@ import { MicRipple } from "../../components/MicRipple";
 import { PageHeader } from "../../components/PageHeader";
 import { VoiceOrb } from "../../components/VoiceOrb";
 import { useAuth } from "../../hooks/useAuth";
-import { useAutoVoiceListen } from "../../hooks/useAutoVoiceListen";
-import { usePressToTalk } from "../../hooks/usePressToTalk";
 import { useLanguage } from "../../hooks/useLanguage";
 import { useLearningPair } from "../../hooks/useLearningPair";
 import { useLogin } from "../../hooks/useLogin";
 import { useNotification } from "../../hooks/useNotification";
 import { useWords } from "../../hooks/useWords";
+import { AI_CONFIG, aiFetch } from "../../services/aiConfig";
 import { LoginStatus, NotificationKeys } from "../../services/localKey";
 import { ChatMessage, chatWithLocalLlm } from "../../services/llmService";
-import { AI_CONFIG, aiFetch } from "../../services/aiConfig";
 import {
   buildMixedSpeechPrompt,
   transcribeAudio,
@@ -43,14 +42,14 @@ import {
   buildWelcomeText,
   pickPracticeWords,
 } from "../../utils/dialoguePrompt";
-import { isIOSDevice } from "../../utils/isIOS";
 import { setTranslation } from "../../utils/setTranslation";
 import {
+  playSpeechBlob,
   speakRussian,
   stopSpeaking,
-  unlockAudioSession,
   warmUpSpeechVoices,
 } from "../../utils/speakRussian";
+import { voiceSession } from "../../utils/voiceSession";
 
 type DialogueTurn = {
   id: string;
@@ -77,16 +76,17 @@ const DialoguePage = () => {
   const [phase, setPhase] = useState<Phase>("idle");
   const [showText, setShowText] = useState(false);
   const [micEnabled, setMicEnabled] = useState(true);
-  const [micArmed, setMicArmed] = useState(false);
-  const [isIOS] = useState(() => isIOSDevice());
+  const [level, setLevel] = useState(0);
+  const [userSpeaking, setUserSpeaking] = useState(false);
+  const [pendingSpeechBlob, setPendingSpeechBlob] = useState<Blob | null>(null);
   const [turns, setTurns] = useState<DialogueTurn[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const busyRef = useRef(false);
   const messagesRef = useRef<ChatMessage[]>([]);
   const listRef = useRef<HTMLDivElement | null>(null);
   const sessionActiveRef = useRef(false);
-  const resumeAudioContextRef = useRef<() => Promise<void>>(async () => undefined);
-  const releaseForPlaybackRef = useRef<() => Promise<void>>(async () => undefined);
+  const phaseRef = useRef<Phase>("idle");
+  const micEnabledRef = useRef(true);
 
   const translation = (key: string) =>
     setTranslation(key, dialogueTranslation, languageContext);
@@ -94,6 +94,9 @@ const DialoguePage = () => {
   useEffect(() => {
     checkingLogin(LoginStatus.OTHER);
     warmUpSpeechVoices();
+    return () => {
+      void voiceSession.end();
+    };
   }, []);
 
   useEffect(() => {
@@ -105,6 +108,14 @@ const DialoguePage = () => {
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
+
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
+
+  useEffect(() => {
+    micEnabledRef.current = micEnabled;
+  }, [micEnabled]);
 
   useEffect(() => {
     if (listRef.current) {
@@ -119,15 +130,40 @@ const DialoguePage = () => {
     ]);
   }, []);
 
+  const armListening = useCallback(() => {
+    if (
+      !sessionActiveRef.current ||
+      !micEnabledRef.current ||
+      phaseRef.current !== "ready"
+    ) {
+      return;
+    }
+    voiceSession.beginListening();
+  }, []);
+
+  const speakTutor = useCallback(
+    async (text: string) => {
+      setPendingSpeechBlob(null);
+      setPhase("speaking");
+      voiceSession.pauseListening();
+      const result = await speakRussian(text, "ru", pairConfig.sourceLang);
+      if (!result.ok && result.blob.size > 0) {
+        setPendingSpeechBlob(result.blob);
+      }
+    },
+    [pairConfig.sourceLang]
+  );
+
   const handleUtterance = useCallback(
     async (blob: Blob) => {
       if (busyRef.current || !sessionActiveRef.current) return;
       busyRef.current = true;
+      setUserSpeaking(false);
       setPhase("transcribing");
+      voiceSession.pauseListening();
 
       try {
         const text = await transcribeAudio(blob, {
-          // Auto language: Russian base + Latin vocabulary words.
           language: null,
           prompt: buildMixedSpeechPrompt(
             wordsHook.map((word) => word.word),
@@ -136,6 +172,7 @@ const DialoguePage = () => {
         });
         if (!text.trim()) {
           setPhase("ready");
+          armListening();
           return;
         }
 
@@ -157,13 +194,9 @@ const DialoguePage = () => {
         setMessages(saved);
         appendTurn("assistant", reply);
 
-        setPhase("speaking");
-        await releaseForPlaybackRef.current();
-        await speakRussian(reply, "ru", pairConfig.sourceLang).catch(
-          () => undefined
-        );
-        await resumeAudioContextRef.current();
+        await speakTutor(reply);
         setPhase("ready");
+        armListening();
       } catch (error) {
         const message =
           error instanceof Error ? error.message : translation("errorGeneric");
@@ -175,100 +208,112 @@ const DialoguePage = () => {
           NotificationKeys.ERROR
         );
         setPhase(sessionActiveRef.current ? "ready" : "idle");
+        if (sessionActiveRef.current) armListening();
       } finally {
         busyRef.current = false;
       }
     },
-    [addNotification, appendTurn, pairConfig.sourceLang, translation, wordsHook]
+    [
+      addNotification,
+      appendTurn,
+      armListening,
+      pairConfig.sourceLang,
+      speakTutor,
+      translation,
+      wordsHook,
+    ]
   );
 
-  const autoListenEnabled = !isIOS && micEnabled && micArmed;
-  const listenPaused = phase !== "ready";
-
-  const { listenState, level: autoLevel, resumeAudioContext, releaseForPlayback } =
-    useAutoVoiceListen({
-      enabled: autoListenEnabled,
-      paused: listenPaused,
-      onUtterance: handleUtterance,
+  useEffect(() => {
+    voiceSession.setUtteranceHandler(handleUtterance);
+    voiceSession.setLevelListener((value) => {
+      setLevel(value);
+      setUserSpeaking(value > 0.02 && phaseRef.current === "ready");
     });
-
-  const {
-    level: pressLevel,
-    startTalking,
-    stopTalking,
-    isRecording,
-  } = usePressToTalk({
-    enabled: isIOS && micEnabled && phase === "ready",
-    onUtterance: handleUtterance,
-  });
-
-  const level = isIOS ? pressLevel : autoLevel;
-
-  useEffect(() => {
-    resumeAudioContextRef.current = resumeAudioContext;
-  }, [resumeAudioContext]);
-
-  useEffect(() => {
-    releaseForPlaybackRef.current = releaseForPlayback;
-  }, [releaseForPlayback]);
+    return () => {
+      voiceSession.setUtteranceHandler(null);
+      voiceSession.setLevelListener(null);
+    };
+  }, [handleUtterance]);
 
   const endDialogue = () => {
     stopSpeaking();
     busyRef.current = false;
     sessionActiveRef.current = false;
     setMicEnabled(true);
-    setMicArmed(false);
+    setPendingSpeechBlob(null);
+    setUserSpeaking(false);
+    setLevel(0);
     setTurns([]);
     setMessages([]);
     messagesRef.current = [];
     setPhase("idle");
+    void voiceSession.end();
   };
 
   const isSessionActive =
     phase !== "idle" || turns.length > 0 || sessionActiveRef.current;
 
   const toggleMic = () => {
-    setMicEnabled((value) => !value);
+    setMicEnabled((value) => {
+      const next = !value;
+      micEnabledRef.current = next;
+      if (!next) {
+        voiceSession.pauseListening();
+      } else if (phaseRef.current === "ready") {
+        voiceSession.beginListening();
+      }
+      return next;
+    });
+  };
+
+  const playPendingSpeech = async () => {
+    if (!pendingSpeechBlob) return;
+    try {
+      setPhase("speaking");
+      await playSpeechBlob(pendingSpeechBlob);
+      setPendingSpeechBlob(null);
+      setPhase("ready");
+      armListening();
+    } catch {
+      addNotification(translation("errorGeneric"), NotificationKeys.ERROR);
+      setPhase("ready");
+      armListening();
+    }
   };
 
   const startDialogue = async () => {
     if (busyRef.current || !wordsHook.length) return;
     busyRef.current = true;
     sessionActiveRef.current = true;
-    setMicArmed(false);
+    setPendingSpeechBlob(null);
     setPhase("starting");
     setTurns([]);
     setMessages([]);
     messagesRef.current = [];
 
     try {
+      // One gesture: open AudioContext + mic for the whole conversation.
+      await voiceSession.start();
+
       const practiceWords = pickPracticeWords(wordsHook);
       const welcome = buildWelcomeText(pairConfig);
       const system = buildDialogueSystemPrompt(practiceWords, pairConfig);
-
       const seed: ChatMessage[] = [
         { role: "system", content: system },
         { role: "user", content: buildFirstQuestionUserPrompt(learningPair) },
       ];
 
-      // Prove network path early (shows up in API logs immediately).
       void aiFetch(
         `${AI_CONFIG.llmBaseUrl.replace(/\/v1\/?$/, "")}/health`,
         { method: "GET" },
         8_000
       ).catch(() => undefined);
 
-      // Kick LLM first — never wait on audio/mic unlock before the network call.
       const firstQuestionPromise = chatWithLocalLlm(seed);
 
-      // Best-effort iOS audio unlock; must not block the dialogue pipeline.
-      void unlockAudioSession();
-
       appendTurn("assistant", welcome);
-      setPhase("speaking");
-      await releaseForPlaybackRef.current();
-      await speakRussian(welcome, "ru", pairConfig.sourceLang).catch(() => undefined);
-      await resumeAudioContextRef.current();
+      await speakTutor(welcome);
 
       setPhase("thinking");
       const firstQuestion = await firstQuestionPromise;
@@ -284,25 +329,19 @@ const DialoguePage = () => {
       setMessages(nextMessages);
       appendTurn("assistant", firstQuestion);
 
-      setPhase("speaking");
-      await releaseForPlaybackRef.current();
-      await speakRussian(firstQuestion, "ru", pairConfig.sourceLang).catch(
-        () => undefined
-      );
-      await resumeAudioContextRef.current();
-      // Continuous mic only on desktop. iOS uses hold-to-talk after intro.
-      if (!isIOS) {
-        setMicArmed(true);
-      }
+      await speakTutor(firstQuestion);
       setPhase("ready");
+      armListening();
     } catch (error) {
       sessionActiveRef.current = false;
-      setMicArmed(false);
       setPhase("idle");
+      void voiceSession.end();
       const message =
         error instanceof Error ? error.message : translation("errorLlm");
       addNotification(
-        /timed out|fetch|network|Failed/i.test(message)
+        /mic|Audio|permission|NotAllowed/i.test(message)
+          ? translation("errorMic")
+          : /timed out|fetch|network|Failed/i.test(message)
           ? message
           : translation("errorLlm"),
         NotificationKeys.ERROR
@@ -313,13 +352,8 @@ const DialoguePage = () => {
   };
 
   const statusLabel = (() => {
-    if (isIOS && phase === "ready") {
-      if (isRecording) return translation("recording");
-      return translation("holdToTalkReady");
-    }
-    if (!micEnabled && phase === "ready") {
-      return translation("micOff");
-    }
+    if (pendingSpeechBlob) return translation("tapToHear");
+    if (!micEnabled && phase === "ready") return translation("micOff");
     switch (phase) {
       case "transcribing":
         return translation("transcribing");
@@ -329,10 +363,9 @@ const DialoguePage = () => {
       case "speaking":
         return translation("speaking");
       case "ready":
-        if (listenState === "speech") return translation("listening");
-        if (listenState === "idle") return translation("autoListening");
-        if (listenState === "unsupported") return translation("errorMic");
-        return translation("autoListening");
+        return userSpeaking
+          ? translation("listening")
+          : translation("autoListening");
       default:
         return translation("subtitle");
     }
@@ -364,28 +397,17 @@ const DialoguePage = () => {
     );
   }
 
-  const isUserSpeaking = isIOS
-    ? isRecording
-    : listenState === "speech";
   const lastTurn = turns[turns.length - 1];
   const isAssistantSpeaking =
     phase === "speaking" && lastTurn?.role === "assistant";
-
   const orbMode =
-    isUserSpeaking && micEnabled
+    userSpeaking && micEnabled
       ? "listening"
       : isAssistantSpeaking
       ? "speaking"
       : phase === "thinking" || phase === "transcribing" || phase === "starting"
       ? "thinking"
       : "idle";
-
-  const micDisabled =
-    phase === "idle" && !turns.length
-      ? true
-      : isIOS
-      ? phase !== "ready"
-      : false;
 
   return (
     <Box
@@ -440,9 +462,7 @@ const DialoguePage = () => {
                 {translation("subtitle")}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {isIOS
-                  ? translation("holdToTalkHint")
-                  : translation("autoListenHint")}
+                {translation("autoListenHint")}
               </Typography>
               <Button
                 variant="contained"
@@ -499,40 +519,26 @@ const DialoguePage = () => {
         ) : null}
 
         <Stack spacing={1.75} alignItems="center">
-          <MicRipple active={isUserSpeaking && micEnabled} level={level}>
-            <Fab
-              color={isRecording || micEnabled ? "primary" : "default"}
-              disabled={micDisabled}
-              onClick={isIOS ? undefined : toggleMic}
-              onPointerDown={
-                isIOS
-                  ? (event) => {
-                      event.preventDefault();
-                      if (phase === "ready" && micEnabled) {
-                        void startTalking();
-                      }
-                    }
-                  : undefined
-              }
-              onPointerUp={isIOS ? () => void stopTalking() : undefined}
-              onPointerCancel={isIOS ? () => void stopTalking() : undefined}
-              onPointerLeave={isIOS ? () => void stopTalking() : undefined}
-              onContextMenu={isIOS ? (event) => event.preventDefault() : undefined}
-              aria-label={
-                isIOS
-                  ? translation("holdToTalkReady")
-                  : micEnabled
-                  ? translation("muteMic")
-                  : translation("unmuteMic")
-              }
-              sx={{
-                touchAction: "none",
-                userSelect: "none",
-                WebkitUserSelect: "none",
-                transform: isRecording ? "scale(1.08)" : "none",
-              }}
+          {pendingSpeechBlob ? (
+            <Button
+              variant="contained"
+              startIcon={<VolumeUpIcon />}
+              onClick={() => void playPendingSpeech()}
             >
-              {isIOS || micEnabled ? <MicIcon /> : <MicOffIcon />}
+              {translation("playReply")}
+            </Button>
+          ) : null}
+
+          <MicRipple active={userSpeaking && micEnabled} level={level}>
+            <Fab
+              color={micEnabled ? "primary" : "default"}
+              onClick={toggleMic}
+              disabled={phase === "idle" && !turns.length}
+              aria-label={
+                micEnabled ? translation("muteMic") : translation("unmuteMic")
+              }
+            >
+              {micEnabled ? <MicIcon /> : <MicOffIcon />}
             </Fab>
           </MicRipple>
 
@@ -554,11 +560,7 @@ const DialoguePage = () => {
           color="text.secondary"
           sx={{ mt: 1.25, display: "block" }}
         >
-          {isIOS
-            ? translation("holdToTalkHint")
-            : micEnabled
-            ? translation("micOnHint")
-            : translation("micOffHint")}
+          {micEnabled ? translation("micOnHint") : translation("micOffHint")}
         </Typography>
       </Box>
     </Box>
