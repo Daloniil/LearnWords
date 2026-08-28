@@ -104,27 +104,29 @@ curl http://127.0.0.1:8000/v1/audio/speech \
 
 ## Деплой фронтенда + локальный AI
 
-Сайт на Vercel может использовать **твой** локальный Whisper/Silero/LM Studio:
+Сайт на Vercel / GitHub Pages может использовать **твой** локальный AI:
 
-1. На Mac запусти Whisper + Silero (`./start.sh`) и LM Studio Local Server.
-2. Открой **задеплоенный** сайт в Chrome на этом же компьютере.
-3. В LM Studio → Server → CORS добавь origin Vercel (например `https://learnwords-xxx.vercel.app`) или разреши все для теста.
-
-Whisper API уже разрешает `https://*.vercel.app` и отвечает Chrome Private Network Access.
+1. На Mac запусти LM Studio Local Server и Whisper + Silero (`./start.sh`).
+2. Весь трафик (Whisper / Silero / LLM) идёт на `http://127.0.0.1:8000` — API сам проксирует LLM в LM Studio и отдаёт CORS + Private Network Access.
+3. Открой **задеплоенный** сайт в **Chrome** на этом же компьютере.
+4. **Пересобери и задеплой фронт** после смены `NEXT_PUBLIC_*` (иначе в бандле останется старый URL `:1234`).
 
 **Важно:**
-- Работает только пока API запущен на твоей машине.
-- Другие люди на твоём Vercel-сайте **не** получат твой локальный AI — у них нет `127.0.0.1:8000`.
-- Safari часто блокирует HTTPS→HTTP localhost; надёжнее Chrome / Edge.
-- Если всё равно блок — подними HTTPS-туннель (`cloudflared tunnel` / `ngrok`) на порт `8000` и пропиши URL в `NEXT_PUBLIC_WHISPER_URL` / `NEXT_PUBLIC_TTS_URL`.
+- Работает только пока API + LM Studio запущены на твоей машине.
+- У других пользователей твой локальный AI не заработает.
+- Safari часто блокирует HTTPS→HTTP localhost — используй Chrome / Edge.
+- Если всё равно блок — HTTPS-туннель (`ngrok http 8000`) и пропиши URL в `NEXT_PUBLIC_*`.
 
-Опционально для кастомного домена фронтенда:
+Проверка с прод-origin:
 
 ```bash
-export CORS_ORIGINS="https://your-domain.com"
-./start.sh
+curl -sI -X OPTIONS http://127.0.0.1:8000/v1/chat/completions \
+  -H "Origin: https://your-deployed-site.com" \
+  -H "Access-Control-Request-Method: POST" \
+  -H "Access-Control-Request-Private-Network: true"
 ```
 
+Должны быть заголовки `access-control-allow-origin` и `access-control-allow-private-network: true`.
 ---
 
 ## Приложение LearnWords
@@ -140,5 +142,5 @@ npm run dev
 Перед голосовым диалогом:
 
 1. Запусти LM Studio Local Server (`http://127.0.0.1:1234`) с моделью `qwen2.5-14b-instruct-mlx`
-2. Запусти Whisper + Silero (`./start.sh` в `~/whisper-api`)
-3. В LM Studio включи **CORS** для `http://localhost:3000` (и для Vercel-origin, если тестируешь прод)
+2. Запусти Whisper + Silero (`./start.sh` в `~/whisper-api`) — фронт ходит только на `:8000`
+3. Для локальной разработки CORS уже открыт; LM Studio нужен как upstream для прокси
