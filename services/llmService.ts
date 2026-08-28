@@ -1,4 +1,4 @@
-import { AI_CONFIG } from "./aiConfig";
+import { AI_CONFIG, AI_FETCH_HEADERS } from "./aiConfig";
 
 export type ChatMessage = {
   role: "system" | "user" | "assistant";
@@ -121,6 +121,7 @@ const requestCompletion = async (messages: ChatMessage[]) => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...AI_FETCH_HEADERS,
     },
     body: JSON.stringify({
       model: AI_CONFIG.llmModel,

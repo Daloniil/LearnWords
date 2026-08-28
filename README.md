@@ -102,32 +102,23 @@ curl http://127.0.0.1:8000/v1/audio/speech \
 
 ---
 
-## Деплой фронтенда + локальный AI
+## Деплой фронтенда + локальный AI (телефон / Vercel)
 
-Сайт на Vercel / GitHub Pages может использовать **твой** локальный AI:
+Схема: **телефон → HTTPS ngrok → твой Mac `:8000` → Whisper/Silero + LM Studio**.
 
-1. На Mac запусти LM Studio Local Server и Whisper + Silero (`./start.sh`).
-2. Весь трафик (Whisper / Silero / LLM) идёт на `http://127.0.0.1:8000` — API сам проксирует LLM в LM Studio и отдаёт CORS + Private Network Access.
-3. Открой **задеплоенный** сайт в **Chrome** на этом же компьютере.
-4. **Пересобери и задеплой фронт** после смены `NEXT_PUBLIC_*` (иначе в бандле останется старый URL `:1234`).
+1. LM Studio Local Server + `cd ~/whisper-api && ./start.sh`
+2. Туннель: `ngrok http 8000` (сейчас: `https://percental-quinn-wizardly.ngrok-free.dev`)
+3. В `next.config.js` / `NEXT_PUBLIC_AI_BASE_URL` должен быть этот HTTPS URL
+4. Задеплой фронт на Vercel заново
+5. Пока Mac + API + ngrok запущены — диалог работает с телефона
 
-**Важно:**
-- Работает только пока API + LM Studio запущены на твоей машине.
-- У других пользователей твой локальный AI не заработает.
-- Safari часто блокирует HTTPS→HTTP localhost — используй Chrome / Edge.
-- Если всё равно блок — HTTPS-туннель (`ngrok http 8000`) и пропиши URL в `NEXT_PUBLIC_*`.
+Если перезапустил ngrok — URL сменится: обнови `NEXT_PUBLIC_AI_BASE_URL` и задеплой снова.
 
-Проверка с прод-origin:
+Проверка туннеля:
 
 ```bash
-curl -sI -X OPTIONS http://127.0.0.1:8000/v1/chat/completions \
-  -H "Origin: https://your-deployed-site.com" \
-  -H "Access-Control-Request-Method: POST" \
-  -H "Access-Control-Request-Private-Network: true"
-```
-
-Должны быть заголовки `access-control-allow-origin` и `access-control-allow-private-network: true`.
----
+curl -H "ngrok-skip-browser-warning: 1" https://percental-quinn-wizardly.ngrok-free.dev/health
+```---
 
 ## Приложение LearnWords
 

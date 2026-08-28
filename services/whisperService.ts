@@ -1,4 +1,4 @@
-import { AI_CONFIG } from "./aiConfig";
+import { AI_CONFIG, AI_FETCH_HEADERS } from "./aiConfig";
 
 type TranscribeOptions = {
   language?: string | null;
@@ -36,6 +36,7 @@ export const transcribeAudio = async (
 
   const response = await fetch(AI_CONFIG.whisperUrl, {
     method: "POST",
+    headers: AI_FETCH_HEADERS,
     body: form,
   });
 

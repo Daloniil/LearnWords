@@ -1,4 +1,4 @@
-import { AI_CONFIG } from "../services/aiConfig";
+import { AI_CONFIG, AI_FETCH_HEADERS } from "../services/aiConfig";
 
 const PREFERRED_VOICE_NAMES = [
   /milena/i,
@@ -88,7 +88,10 @@ const speakWithLocalTts = async (
 ) => {
   const response = await fetch(AI_CONFIG.ttsUrl, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...AI_FETCH_HEADERS,
+    },
     body: JSON.stringify({
       input: text,
       language,

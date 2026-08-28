@@ -1,15 +1,23 @@
+const NGROK_BASE =
+  process.env.NEXT_PUBLIC_AI_BASE_URL ||
+  "https://percental-quinn-wizardly.ngrok-free.dev";
+
 export const AI_CONFIG = {
-  // All AI traffic goes through local whisper-api (:8000), which proxies LLM
-  // to LM Studio and sends Private Network Access headers for deployed HTTPS UIs.
+  // Public tunnel → local whisper-api (:8000), which proxies LLM to LM Studio.
   llmBaseUrl:
-    process.env.NEXT_PUBLIC_LLM_BASE_URL || "http://127.0.0.1:8000/v1",
+    process.env.NEXT_PUBLIC_LLM_BASE_URL || `${NGROK_BASE}/v1`,
   llmModel:
     process.env.NEXT_PUBLIC_LLM_MODEL || "qwen2.5-14b-instruct-mlx",
   whisperUrl:
     process.env.NEXT_PUBLIC_WHISPER_URL ||
-    "http://127.0.0.1:8000/v1/audio/transcriptions",
+    `${NGROK_BASE}/v1/audio/transcriptions`,
   ttsUrl:
-    process.env.NEXT_PUBLIC_TTS_URL || "http://127.0.0.1:8000/v1/audio/speech",
+    process.env.NEXT_PUBLIC_TTS_URL || `${NGROK_BASE}/v1/audio/speech`,
   maxWordsInPrompt: 80,
   maxReplyTokens: 400,
+};
+
+/** Bypass ngrok free interstitial when calling the tunnel from the browser. */
+export const AI_FETCH_HEADERS: Record<string, string> = {
+  "ngrok-skip-browser-warning": "1",
 };
