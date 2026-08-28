@@ -26,7 +26,7 @@ export const AI_FETCH_HEADERS: Record<string, string> = {
 };
 
 export const aiFetch = async (
-  input: RequestInfo | URL,
+  input: string,
   init: RequestInit = {},
   timeoutMs = 60_000
 ) => {
